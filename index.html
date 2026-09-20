@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BANDOLERA — Drop Culture for the Unbothered</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="logo">
+    <svg class="logo__mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoChrome" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F3F4F6"/>
+          <stop offset="0.5" stop-color="#8A8F99"/>
+          <stop offset="1" stop-color="#F3F4F6"/>
+        </linearGradient>
+      </defs>
+      <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z"
+            fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+      <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+      <path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" opacity="0.95"/>
+    </svg>
+    <span class="logo__word">BANDOLERA</span>
+  </div>
+  <nav class="nav-desktop">
+    <a href="#collections">Collections</a>
+    <a href="#shop" data-scroll-shop>Shop</a>
+    <a href="#story">Our Story</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <button class="cart-icon" id="cartIcon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#18140F" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4" fill="#18140F"/><circle cx="17" cy="20" r="1.4" fill="#18140F"/></svg>
+    <span class="badge" id="cartCount">0</span>
+  </button>
+</header>
+
+<!-- ============ TRUST STRIP ============ -->
+<div class="trust-strip">
+  <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>Free Shipping ₹999+</div>
+  <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0114-5"/><path d="M20 12a8 8 0 01-14 5"/><path d="M18 3v4h-4"/><path d="M6 21v-4h4"/></svg>7-Day Easy Returns</div>
+  <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>100% Secure Payments</div>
+  <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Cash on Delivery</div>
+</div>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee">
+  <div class="marquee__track">
+    <span>PREMIUM STREETWEAR</span><span class="marquee__dot">✦</span>
+    <span>DROP CULTURE</span><span class="marquee__dot">✦</span>
+    <span>MADE FOR THE UNBOTHERED</span><span class="marquee__dot">✦</span>
+    <span>PREMIUM STREETWEAR</span><span class="marquee__dot">✦</span>
+    <span>DROP CULTURE</span><span class="marquee__dot">✦</span>
+    <span>MADE FOR THE UNBOTHERED</span><span class="marquee__dot">✦</span>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero__blob"></div>
+  <svg class="hero__mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z"
+          fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+    <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+    <path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" opacity="0.95"/>
+  </svg>
+  <p class="hero__eyebrow">// T-Shirts · Oversized · Hoodies &amp; Sweatshirts, Coming Soon</p>
+  <h1>Wear What<br><span class="chrome-text">Feels Like You.</span></h1>
+  <p class="hero__tag">Bandolera is premium streetwear, cut for everyday wear and built to last — quality you can feel the moment you put it on.</p>
+  <button class="hero__cta" data-scroll-shop>Shop New Arrivals →</button>
+  <p class="hero__social">Loved by <b>6.2K+</b> members of the squad</p>
+
+  <div class="chip-scroll">
+    <button class="chip" data-scroll-shop>T-Shirts</button>
+    <button class="chip" data-scroll-shop>Oversized</button>
+    <button class="chip" data-scroll-shop>Hoodies</button>
+    <button class="chip" data-scroll-shop>Sweatshirts</button>
+  </div>
+</section>
+
+<!-- ============ COLLECTIONS SHOWCASE ============ -->
+<section class="collections reveal" id="collections">
+  <p class="eyebrow eyebrow--center">// Shop By Collection</p>
+  <h2 class="collections__title">Four Ways to Wear It</h2>
+  <div class="collections__grid">
+    <button class="collection-card art-sand" data-goto-tab="tshirt">
+      <div class="collection-card__body">
+        <h3>T-Shirts</h3>
+        <p>Everyday staples, cut clean.</p>
+        <span class="collection-card__cta">Explore →</span>
+      </div>
+    </button>
+    <button class="collection-card art-ink" data-goto-tab="oversized">
+      <div class="collection-card__body">
+        <h3>Oversized</h3>
+        <p>Room to move, still sharp.</p>
+        <span class="collection-card__cta">Explore →</span>
+      </div>
+    </button>
+    <button class="collection-card art-blush" data-goto-tab="hoodie">
+      <span class="collection-card__soon">Soon</span>
+      <div class="collection-card__body">
+        <h3>Hoodies</h3>
+        <p>Heavyweight comfort, dropping soon.</p>
+        <span class="collection-card__cta">Get Notified →</span>
+      </div>
+    </button>
+    <button class="collection-card art-cocoa" data-goto-tab="sweatshirt">
+      <span class="collection-card__soon">Soon</span>
+      <div class="collection-card__body">
+        <h3>Sweatshirts</h3>
+        <p>Layer-ready, dropping soon.</p>
+        <span class="collection-card__cta">Get Notified →</span>
+      </div>
+    </button>
+  </div>
+</section>
+
+<!-- ============ SHOP ============ -->
+<section class="shop" id="shop">
+  <div class="shop__head">
+    <div>
+      <h2>The Catalog</h2>
+      <p>Demo drop — once your control panel is live, this fills with your real stock.</p>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+  <div id="shopContent"></div>
+</section>
+
+<!-- ============ TRUST / TESTIMONIALS ============ -->
+<section class="trust-section reveal">
+  <h2>Why the Squad Keeps Coming Back</h2>
+  <div class="testi-grid">
+    <div class="testi">
+      <div class="testi__stars">★★★★★</div>
+      <p class="quote">"Fit is exactly like the size chart said. Fabric feels premium, not the usual thin streetwear cotton."</p>
+      <p class="testi__name">— Rohan D., verified buyer</p>
+    </div>
+    <div class="testi">
+      <div class="testi__stars">★★★★★</div>
+      <p class="quote">"Ordered on a Tuesday, wearing it by the weekend. Packaging alone felt like a proper brand."</p>
+      <p class="testi__name">— Ayaan K., verified buyer</p>
+    </div>
+    <div class="testi">
+      <div class="testi__stars">★★★★★</div>
+      <p class="quote">"Finally a brand that gets oversized fits right — not just 'big', actually well cut."</p>
+      <p class="testi__name">— Priya S., verified buyer</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT / STORY ============ -->
+<section class="story reveal" id="story">
+  <div class="story__grid">
+    <div class="story__text">
+      <p class="eyebrow">// Our Story</p>
+      <h2>Why Bandolera Exists</h2>
+      <p>Bandolera didn't start with a business plan — it started with a problem. Everything that actually looked good either felt cheap by the second wash, or cost triple what it should because of a logo. We wanted the fit and the fabric to both be true, at a price that made sense.</p>
+      <p>So that's the whole plan, still. No filler drops, no fake urgency — just pieces built well enough that you reach for them every week, not just the week you bought them.</p>
+      <div class="story__points">
+        <div class="story__point">
+          <b>Quality Over Hype</b>
+          <span>Fabric and stitching that hold up — not just a logo that looks good in a story post.</span>
+        </div>
+        <div class="story__point">
+          <b>Built for Everyday</b>
+          <span>Not one-wear drop pieces. Fits made to actually live in your rotation.</span>
+        </div>
+        <div class="story__point">
+          <b>Direct, No Middleman Markup</b>
+          <span>We sell straight to you, so the quality goes up without the price doing the same.</span>
+        </div>
+      </div>
+    </div>
+    <div class="story__mark">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z"
+              fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+        <path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" opacity="0.95"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BRAND MARK ============ -->
+<section class="brandmark reveal" id="brandmark">
+  <h2>Built to Be <span class="chrome-text">Unforgettable.</span></h2>
+  <p>One mark, three ways to wear it — the patch, the wordmark, the bolt.</p>
+  <div class="brandmark__row">
+    <div class="brandmark__cell">
+      <svg width="80" height="80" viewBox="0 0 100 100">
+        <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z" fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+        <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+      </svg>
+      <span>Patch Mark</span>
+    </div>
+    <div class="brandmark__cell">
+      <span class="logo__word chrome-text" style="font-size:30px;">BANDOLERA</span>
+      <span>Wordmark</span>
+    </div>
+    <div class="brandmark__cell">
+      <svg width="52" height="80" viewBox="0 0 100 100"><path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" stroke="#0B8F86" stroke-width="1.5"/></svg>
+      <span>The Bolt</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section class="contact reveal" id="contact">
+  <div class="contact__grid">
+    <div class="contact__text">
+      <p class="eyebrow">// Get In Touch</p>
+      <h2>Questions? We Got You.</h2>
+      <p>Sizing doubts, order status, collab ideas, or just want to say hi — this goes straight to us, not a call center.</p>
+      <div class="contact__links">
+        <a href="mailto:hello@bandolera.com" class="contact__link">
+          <span class="contact__icon">✉</span> hello@bandolera.com
+        </a>
+        <a href="https://wa.me/910000000000" class="contact__link" target="_blank" rel="noopener">
+          <span class="contact__icon">💬</span> WhatsApp Us
+        </a>
+        <a href="https://instagram.com/bandolera" class="contact__link" target="_blank" rel="noopener">
+          <span class="contact__icon">📷</span> @bandolera
+        </a>
+      </div>
+    </div>
+    <form class="contact__form" id="contactForm">
+      <div class="field-row">
+        <input type="text" placeholder="Your name" required>
+        <input type="email" placeholder="Your email" required>
+      </div>
+      <textarea placeholder="What's up?" rows="4" required></textarea>
+      <button type="submit">Send Message</button>
+      <p class="contact__note">Opens your email app with this filled in — replies land straight in your inbox.</p>
+    </form>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <p>© 2026 Bandolera. Drop culture, delivered.</p>
+  <p>Made for the unbothered.</p>
+</footer>
+
+<!-- ============ STICKY MINI CART ============ -->
+<div class="mini-cart" id="miniCart">
+  <div class="mini-cart__info"><b id="miniCartCount">0</b> items · <b id="miniCartTotal">₹0</b></div>
+  <button class="mini-cart__cta" id="miniCartCta">View Bag</button>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottom-nav">
+  <button class="nav-btn is-active" id="navHome">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+    Home
+  </button>
+  <button class="nav-btn" id="navShop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 4h9L18 2"/><rect x="4" y="6" width="16" height="15" rx="2"/><path d="M9 10a3 3 0 006 0"/></svg>
+    Shop
+  </button>
+  <button class="nav-btn" id="navDrops">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1z"/></svg>
+    Drops
+  </button>
+  <button class="nav-btn" id="navBag">
+    <span class="nav-btn__dot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/></svg>
+      <span class="nav-btn__badge" id="navBagBadge">0</span>
+    </span>
+    Bag
+  </button>
+</nav>
+
+<!-- ============ CART DRAWER ============ -->
+<div class="scrim" id="scrim"></div>
+<aside class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer__grabber"></div>
+  <div class="cart-drawer__head">
+    <h3>Your Bag</h3>
+    <button id="cartClose">×</button>
+  </div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-drawer__foot">
+    <div class="cart-drawer__totalrow"><span>Subtotal</span><strong id="cartTotal">₹0</strong></div>
+    <button class="checkout-btn" id="checkoutBtn">Checkout</button>
+  </div>
+</aside>
+
+<div id="toastHost"></div>
+
+<script src="data.js"></script>
+<script src="logic.js"></script>
+</body>
+</html>
