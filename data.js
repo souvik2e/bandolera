@@ -2,10 +2,15 @@
 // BANDOLERA — CATALOG DATA (v3)
 // Live categories: tshirt, oversized. Coming-soon categories: hoodie, sweatshirt
 // (render a "Coming Soon" panel instead of a grid — see logic.js).
-// Once the control panel is live, real products replace these placeholders.
+//
+// PRODUCTS NOW COME FROM A GOOGLE SHEET, NOT THIS FILE.
+// Paste your "Publish to web" CSV link below. DEMO_CATALOG further down is
+// only the offline fallback shown if the sheet can't be reached.
 // ==========================================================================
 
-const CATALOG = {
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQq2CyYeu06nM0Nx6T0PfaxXrtXWf6dSsGakXFhXwztw5QGMR2S2ZYns5nOlhEtSpziA3EmhUR5m1Dv/pub?output=csv";
+
+const DEMO_CATALOG = {
   tshirt: {
     label: "T-Shirts",
     comingSoon: false,
