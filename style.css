@@ -247,6 +247,17 @@ a{ color:inherit; }
 .card:hover{ box-shadow: var(--shadow-md); transform: translateY(-3px); }
 
 .card__art{ position:relative; aspect-ratio:1/1; overflow:hidden; }
+.card__art img{ width:100%; height:100%; object-fit:cover; cursor:pointer; }
+.card__dots{
+  position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+  display:flex; gap:5px; z-index:2;
+}
+.card__dot{ width:6px; height:6px; border-radius:50%; background: rgba(255,255,255,.55); transition: background .2s ease; }
+.card__dot.is-active{ background: #fff; }
+.card__details{
+  font-size:11.5px; color: var(--ink-dim); margin:0 0 10px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
 .card__art .art{ width:100%; height:100%; }
 .card__tag{
   position:absolute; top:9px; left:9px;
@@ -254,6 +265,7 @@ a{ color:inherit; }
   background: rgba(255,255,255,.85); color: var(--ink);
   padding: 3px 8px; border-radius:20px; letter-spacing:.03em;
   backdrop-filter: blur(6px);
+  max-width: 70%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .card__badge{
   position:absolute; top:9px; right:9px;
@@ -283,33 +295,47 @@ a{ color:inherit; }
 @media (min-width:560px){ .grid{ grid-template-columns: repeat(3,1fr); gap:18px; } }
 @media (min-width:900px){ .grid{ grid-template-columns: repeat(4,1fr); } .card__name{ min-height:auto; } }
 
-/* ================= COMING SOON ================= */
-.coming-soon{
-  border-radius: var(--radius); overflow:hidden; position:relative;
-  padding: 54px 24px; text-align:center;
-  background: var(--surface);
-  backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
+/* ================= COMING SOON POSTER ================= */
+.coming-soon-poster{
+  display:grid; grid-template-columns:1fr; border-radius: var(--radius);
+  overflow:hidden; box-shadow: var(--shadow-lg); border:1px solid var(--line);
 }
-.coming-soon__blob{
-  position:absolute; inset:-40%; z-index:0;
-  background: conic-gradient(from 90deg, rgba(200,30,58,.12), rgba(14,124,116,.12), rgba(200,30,58,.12));
-  filter: blur(50px); opacity:.7;
+@media (min-width:760px){ .coming-soon-poster{ grid-template-columns: 1fr 1fr; min-height:420px; } }
+
+.csp__art{
+  position:relative; display:flex; align-items:center; justify-content:center;
+  padding:36px; aspect-ratio:1/1; overflow:hidden;
 }
-.coming-soon > *{ position:relative; z-index:1; }
-.coming-soon__icon{ width:56px; height:56px; margin:0 auto 18px; opacity:.75; }
-.coming-soon h3{ font-family: var(--font-d); font-weight:600; font-size: 30px; margin:0 0 10px; }
-.coming-soon p{ color: var(--ink-dim); font-size:14px; max-width:380px; margin:0 auto 26px; }
-.notify-row{ display:flex; gap:8px; max-width:360px; margin:0 auto; flex-wrap:wrap; justify-content:center; }
+@media (min-width:760px){ .csp__art{ aspect-ratio:auto; } }
+.cs-hoodie .csp__art{ background: linear-gradient(160deg,#3A2A28,#1C1412); }
+.cs-sweatshirt .csp__art{ background: linear-gradient(160deg,#3A2A18,#1C140C); }
+.csp__icon{ width:58%; max-width:230px; color: rgba(255,255,255,.16); }
+
+.csp__stamp{
+  position:absolute; top:28px; right:-38px; z-index:2;
+  background: var(--crimson); color:#fff;
+  padding:6px 48px; font-family: var(--font-m); font-size:10.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.09em;
+  transform: rotate(35deg); box-shadow:0 6px 14px rgba(0,0,0,.28);
+}
+
+.csp__content{
+  padding:36px 32px; background: var(--surface-solid);
+  display:flex; flex-direction:column; justify-content:center;
+}
+.csp__content .eyebrow{ margin-bottom:8px; }
+.csp__content h3{ font-family: var(--font-d); font-weight:600; font-size: clamp(30px,5vw,42px); margin:0 0 12px; line-height:1.05; }
+.csp__tag{ color: var(--ink-dim); font-size:14px; max-width:340px; margin:0 0 24px; }
+
+.notify-row{ display:flex; gap:8px; max-width:380px; flex-wrap:wrap; }
 .notify-row input{
-  flex:1; min-width:200px; padding: 13px 16px; border-radius:26px;
-  border:1px solid var(--line-strong); background: var(--surface-solid);
+  flex:1; min-width:180px; padding: 13px 16px; border-radius:26px;
+  border:1px solid var(--line-strong); background: var(--bg);
   font-family: var(--font-b); font-size:13.5px; color: var(--ink);
 }
 .notify-row input:focus{ outline:2px solid var(--teal); outline-offset:1px; }
 .notify-row button{
-  background: var(--crimson); color:#fff; border:none; padding:13px 22px;
+  background: var(--ink); color:#fff; border:none; padding:13px 22px;
   border-radius:26px; font-weight:700; font-size:12.5px; text-transform:uppercase; letter-spacing:.05em;
 }
 

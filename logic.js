@@ -8,9 +8,25 @@
 
 let cart = [];
 let activeTab = "tshirt";
+let CATALOG = {};
 const notifiedEmails = [];
 
 const money = n => "₹" + n.toLocaleString("en-IN");
+
+// ---- palette for admin-added products that don't have an image yet -------
+const ART_PALETTE = [
+  {type:"wave",   c1:"#EDE4D3", c2:"#B7A688"},
+  {type:"stripe", c1:"#211F1C", c2:"#57534A"},
+  {type:"wave",   c1:"#E7C9C2", c2:"#AD766C"},
+  {type:"burst",  c1:"#F2EEE3", c2:"#ACA492"},
+  {type:"stripe", c1:"#8B6A52", c2:"#5B4433"},
+  {type:"burst",  c1:"#D8CCB8", c2:"#8B7E68"},
+];
+function pickArt(name){
+  let hash = 0;
+  for(let i=0;i<name.length;i++){ hash = (hash*31 + name.charCodeAt(i)) >>> 0; }
+  return ART_PALETTE[hash % ART_PALETTE.length];
+}
 
 // ---- card art (pure SVG/CSS, no image assets needed) --------------------
 function artSVG(art, extra){
@@ -49,18 +65,127 @@ function artSVG(art, extra){
   return "";
 }
 
+// ---- catalog loading — live control-panel data, demo data as fallback ----
+function buildCatalogFromLive(products){
+  const cats = {
+    tshirt:     { label:"T-Shirts",    items:[] },
+    oversized:  { label:"Oversized",   items:[] },
+    hoodie:     { label:"Hoodies",     items:[] },
+    sweatshirt: { label:"Sweatshirts", items:[] },
+  };
+  products.forEach(p=>{
+    if(!cats[p.category]) return;
+    const images = (p.images || "").split("|").map(s=>s.trim()).filter(Boolean);
+    cats[p.category].items.push({
+      id: p.id, name: p.name, price: p.price, mrp: p.mrp,
+      badge: p.badge || null, tag: p.style || null,
+      details: p.details || "", images: images,
+      image_url: images[0] || null,
+      art: images[0] ? null : pickArt(p.name),
+    });
+  });
+  Object.keys(cats).forEach(k => cats[k].comingSoon = cats[k].items.length === 0);
+  return cats;
+}
+
+function normalizeDemoCatalog(){
+  const cats = {};
+  Object.keys(DEMO_CATALOG).forEach(key=>{
+    const src = DEMO_CATALOG[key];
+    cats[key] = {
+      label: src.label,
+      comingSoon: src.comingSoon,
+      items: src.items.map(p=>({
+        id:p.id, name:p.name, price:p.price, mrp:p.mrp, badge:p.badge||null,
+        tag:p.code||null, details:"", images:[], image_url:null, art:p.art,
+      })),
+    };
+  });
+  return cats;
+}
+
+// ---- tiny CSV parser (handles quoted fields with commas/newlines inside) --
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ","){ row.push(field); field = ""; }
+      else if(c === "\n" || c === "\r"){
+        if(c === "\r" && text[i+1] === "\n") i++;
+        row.push(field); rows.push(row); row = []; field = "";
+      } else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => cell.trim() !== ""));
+}
+
+function csvToProducts(text){
+  const rows = parseCSV(text);
+  if(rows.length < 2) return [];
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  return rows.slice(1).map((r, idx)=>{
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = (r[i] || "").trim());
+    return {
+      id: obj.id || `row-${idx}`,
+      name: obj.name,
+      category: (obj.category || "").toLowerCase(),
+      style: obj.style,
+      price: Number(obj.price) || 0,
+      mrp: Number(obj.mrp) || 0,
+      details: obj.details,
+      images: obj.images,
+      badge: obj.badge,
+      active: /^(true|yes|1)$/i.test(obj.active || ""),
+    };
+  }).filter(p => p.active && p.name && p.category);
+}
+
+async function loadCatalog(){
+  try{
+    if(!SHEET_CSV_URL || SHEET_CSV_URL.includes("PASTE-YOUR")) throw new Error("sheet not connected yet");
+    const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
+    if(!res.ok) throw new Error("sheet unreachable");
+    const text = await res.text();
+    const products = csvToProducts(text);
+    if(products.length === 0) throw new Error("sheet returned no active products");
+    CATALOG = buildCatalogFromLive(products);
+  } catch(err){
+    // Sheet not connected yet, or the request failed — show the demo catalog
+    // instead of a broken page. Once the sheet link is pasted in, this stops firing.
+    CATALOG = normalizeDemoCatalog();
+  }
+}
+
 // ---- catalog rendering ----------------------------------------------------
 function productCard(item){
   const off = Math.round(100 - (item.price/item.mrp)*100);
+  const media = item.image_url
+    ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy" data-idx="0">`
+    : artSVG(item.art);
+  const dots = (item.images && item.images.length > 1)
+    ? `<div class="card__dots">${item.images.map((_,i)=>`<span class="card__dot ${i===0?"is-active":""}"></span>`).join("")}</div>`
+    : "";
   return `
-    <article class="card" data-id="${item.id}">
+    <article class="card" data-id="${item.id}" ${item.images && item.images.length>1 ? `data-images='${JSON.stringify(item.images)}'` : ""}>
       <div class="card__art">
-        ${artSVG(item.art)}
-        <span class="card__tag">${item.code}</span>
+        ${media}
+        ${dots}
+        ${item.tag ? `<span class="card__tag">${item.tag}</span>` : ""}
         ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ""}
       </div>
       <div class="card__body">
         <h3 class="card__name">${item.name}</h3>
+        ${item.details ? `<p class="card__details">${item.details}</p>` : ""}
         <div class="card__price">
           <span class="price-now">${money(item.price)}</span>
           <span class="price-mrp">${money(item.mrp)}</span>
@@ -74,24 +199,53 @@ function productCard(item){
     </article>`;
 }
 
-function comingSoonPanel(label){
+const GARMENT_ICONS = {
+  hoodie: `<svg class="csp__icon" viewBox="0 0 200 240" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M60 40 Q100 8 140 40 L150 70 Q100 52 50 70 Z"/>
+    <path d="M50 70 L32 102 L32 222 L168 222 L168 102 L150 70 Q100 92 50 70 Z"/>
+    <path d="M32 102 L4 158 L26 176 L50 122"/>
+    <path d="M168 102 L196 158 L174 176 L150 122"/>
+    <path d="M68 158 Q100 174 132 158"/>
+    <path d="M90 74 L88 112" stroke-width="2"/>
+    <path d="M110 74 L112 112" stroke-width="2"/>
+  </svg>`,
+  sweatshirt: `<svg class="csp__icon" viewBox="0 0 200 240" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M76 42 Q100 58 124 42"/>
+    <path d="M76 42 L38 58 L28 90 L44 100 L56 74 L56 222 L144 222 L144 74 L156 100 L172 90 L162 58 L124 42"/>
+    <path d="M56 206 L144 206" stroke-width="2"/>
+    <path d="M44 100 L56 100" stroke-width="2"/>
+    <path d="M156 100 L144 100" stroke-width="2"/>
+  </svg>`,
+};
+
+const CS_COPY = {
+  hoodie: "Heavyweight comfort, cut right — dropping soon.",
+  sweatshirt: "Layer-ready essentials, dropping soon.",
+};
+
+function comingSoonPanel(key, label){
+  const icon = GARMENT_ICONS[key] || GARMENT_ICONS.hoodie;
+  const tag = CS_COPY[key] || "We're finishing the fit before it goes live.";
   return `
-    <div class="coming-soon">
-      <div class="coming-soon__blob"></div>
-      <svg class="coming-soon__icon" viewBox="0 0 24 24" fill="none" stroke="#18140F" stroke-width="1.4">
-        <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 3.2"/>
-      </svg>
-      <h3>${label}. Dropping Soon.</h3>
-      <p>We're finishing the fit before it goes live — pieces built the same way as everything else in this catalog. Leave your email and be first to know.</p>
-      <form class="notify-row" data-notify-form>
-        <input type="email" placeholder="you@email.com" required>
-        <button type="submit">Notify Me</button>
-      </form>
+    <div class="coming-soon-poster cs-${key}">
+      <div class="csp__art">
+        ${icon}
+        <span class="csp__stamp">Coming Soon</span>
+      </div>
+      <div class="csp__content">
+        <p class="eyebrow">// Next Drop</p>
+        <h3 class="chrome-text">${label}.</h3>
+        <p class="csp__tag">${tag} Leave your email and be first to know.</p>
+        <form class="notify-row" data-notify-form>
+          <input type="email" placeholder="you@email.com" required>
+          <button type="submit">Notify Me</button>
+        </form>
+      </div>
     </div>`;
 }
 
 function findItem(id){
-  for(const key of ["tshirt","oversized"]){
+  for(const key of Object.keys(CATALOG)){
     const hit = CATALOG[key].items.find(i=>i.id===id);
     if(hit) return {...hit, cat:key};
   }
@@ -102,7 +256,7 @@ function renderCatalog(){
   const host = document.getElementById("shopContent");
   const cat = CATALOG[activeTab];
   if(cat.comingSoon){
-    host.innerHTML = comingSoonPanel(cat.label);
+    host.innerHTML = comingSoonPanel(activeTab, cat.label);
   } else {
     host.innerHTML = `<div class="grid">${cat.items.map(productCard).join("")}</div>`;
   }
@@ -110,10 +264,13 @@ function renderCatalog(){
 
 function renderTabs(){
   const bar = document.getElementById("tabBar");
-  bar.innerHTML = TABS.map(t => `
+  bar.innerHTML = TABS.map(t => {
+    const isSoon = CATALOG[t.key] ? CATALOG[t.key].comingSoon : t.note;
+    return `
     <button class="tab ${t.key===activeTab?"is-active":""}" data-tab="${t.key}">
-      ${t.label}${t.note ? `<span class="tab__note">${t.note}</span>` : ""}
-    </button>`).join("");
+      ${t.label}${isSoon ? `<span class="tab__note">Soon</span>` : ""}
+    </button>`;
+  }).join("");
 }
 
 // ---- cart -------------------------------------------------------------
@@ -156,7 +313,7 @@ function renderCart(){
   } else {
     body.innerHTML = cart.map(c => `
       <div class="cart-line">
-        <div class="cart-line__art">${artSVG(c.art)}</div>
+        <div class="cart-line__art">${c.image_url ? `<img src="${c.image_url}" alt="">` : artSVG(c.art)}</div>
         <div class="cart-line__info">
           <p class="cart-line__name">${c.name}</p>
           <p class="cart-line__price">${money(c.price)}</p>
@@ -247,8 +404,28 @@ function setupScrollSpy(){
   map.forEach(m => m.el && observer.observe(m.el));
 }
 
+// ---- keep the top Collections showcase in sync with real stock ----------
+function updateCollectionBadges(){
+  document.querySelectorAll(".collection-card[data-goto-tab]").forEach(card=>{
+    const key = card.dataset.gotoTab;
+    const cat = CATALOG[key];
+    if(!cat) return;
+    const soonTag = card.querySelector(".collection-card__soon");
+    const cta = card.querySelector(".collection-card__cta");
+    if(cat.comingSoon){
+      if(!soonTag){ card.insertAdjacentHTML("afterbegin", `<span class="collection-card__soon">Soon</span>`); }
+      if(cta) cta.textContent = "Get Notified →";
+    } else {
+      if(soonTag) soonTag.remove();
+      if(cta) cta.textContent = "Explore →";
+    }
+  });
+}
+
 // ---- wire up --------------------------------------------------------------
-function init(){
+async function init(){
+  await loadCatalog();
+  updateCollectionBadges();
   renderTabs();
   renderCatalog();
   renderCart();
@@ -273,8 +450,19 @@ function init(){
 
   document.getElementById("shopContent").addEventListener("click", e=>{
     const btn = e.target.closest(".btn-add");
-    if(!btn) return;
-    addToCart(btn.dataset.id, btn);
+    if(btn){ addToCart(btn.dataset.id, btn); return; }
+
+    const artBox = e.target.closest(".card__art");
+    const card = artBox?.closest(".card[data-images]");
+    if(artBox && card){
+      const images = JSON.parse(card.dataset.images);
+      const img = card.querySelector("img");
+      const dots = card.querySelectorAll(".card__dot");
+      let idx = (Number(img.dataset.idx) + 1) % images.length;
+      img.src = images[idx];
+      img.dataset.idx = idx;
+      dots.forEach((d,i)=> d.classList.toggle("is-active", i===idx));
+    }
   });
 
   document.getElementById("shopContent").addEventListener("submit", e=>{
