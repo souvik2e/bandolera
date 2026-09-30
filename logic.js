@@ -70,6 +70,7 @@ function buildCatalogFromLive(products){
   const cats = {
     tshirt:     { label:"T-Shirts",    items:[] },
     oversized:  { label:"Oversized",   items:[] },
+    polo:       { label:"Polo",        items:[] },
     hoodie:     { label:"Hoodies",     items:[] },
     sweatshirt: { label:"Sweatshirts", items:[] },
   };
@@ -84,7 +85,9 @@ function buildCatalogFromLive(products){
       art: images[0] ? null : pickArt(p.name),
     });
   });
-  Object.keys(cats).forEach(k => cats[k].comingSoon = cats[k].items.length === 0);
+  Object.keys(cats).forEach(k => {
+    cats[k].comingSoon = ALWAYS_LIVE.includes(k) ? false : cats[k].items.length === 0;
+  });
   return cats;
 }
 
@@ -94,7 +97,7 @@ function normalizeDemoCatalog(){
     const src = DEMO_CATALOG[key];
     cats[key] = {
       label: src.label,
-      comingSoon: src.comingSoon,
+      comingSoon: ALWAYS_LIVE.includes(key) ? false : src.comingSoon,
       items: src.items.map(p=>({
         id:p.id, name:p.name, price:p.price, mrp:p.mrp, badge:p.badge||null,
         tag:p.code||null, details:"", images:[], image_url:null, art:p.art,
@@ -104,64 +107,33 @@ function normalizeDemoCatalog(){
   return cats;
 }
 
-// ---- tiny CSV parser (handles quoted fields with commas/newlines inside) --
-function parseCSV(text){
-  const rows = [];
-  let row = [], field = "", inQuotes = false;
-  for(let i=0; i<text.length; i++){
-    const c = text[i];
-    if(inQuotes){
-      if(c === '"'){
-        if(text[i+1] === '"'){ field += '"'; i++; }
-        else inQuotes = false;
-      } else field += c;
-    } else {
-      if(c === '"') inQuotes = true;
-      else if(c === ","){ row.push(field); field = ""; }
-      else if(c === "\n" || c === "\r"){
-        if(c === "\r" && text[i+1] === "\n") i++;
-        row.push(field); rows.push(row); row = []; field = "";
-      } else field += c;
-    }
-  }
-  if(field.length || row.length){ row.push(field); rows.push(row); }
-  return rows.filter(r => r.some(cell => cell.trim() !== ""));
-}
-
-function csvToProducts(text){
-  const rows = parseCSV(text);
-  if(rows.length < 2) return [];
-  const headers = rows[0].map(h => h.trim().toLowerCase());
-  return rows.slice(1).map((r, idx)=>{
-    const obj = {};
-    headers.forEach((h,i) => obj[h] = (r[i] || "").trim());
-    return {
-      id: obj.id || `row-${idx}`,
-      name: obj.name,
-      category: (obj.category || "").toLowerCase(),
-      style: obj.style,
-      price: Number(obj.price) || 0,
-      mrp: Number(obj.mrp) || 0,
-      details: obj.details,
-      images: obj.images,
-      badge: obj.badge,
-      active: /^(true|yes|1)$/i.test(obj.active || ""),
-    };
-  }).filter(p => p.active && p.name && p.category);
+function normalizeRow(obj, idx){
+  return {
+    id: obj.id || `row-${idx}`,
+    name: obj.name,
+    category: String(obj.category || "").toLowerCase().trim(),
+    style: obj.style,
+    price: Number(obj.price) || 0,
+    mrp: Number(obj.mrp) || 0,
+    details: obj.details,
+    images: obj.images,
+    badge: obj.badge,
+    active: /^(true|yes|1)$/i.test(String(obj.active || "").trim()),
+  };
 }
 
 async function loadCatalog(){
   try{
-    if(!SHEET_CSV_URL || SHEET_CSV_URL.includes("PASTE-YOUR")) throw new Error("sheet not connected yet");
-    const res = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
+    if(!SHEET_DATA_URL || SHEET_DATA_URL.includes("PASTE-YOUR")) throw new Error("sheet not connected yet");
+    const res = await fetch(`${SHEET_DATA_URL}?t=${Date.now()}`);
     if(!res.ok) throw new Error("sheet unreachable");
-    const text = await res.text();
-    const products = csvToProducts(text);
+    const rows = await res.json();
+    const products = rows.map(normalizeRow).filter(p => p.active && p.name && p.category);
     if(products.length === 0) throw new Error("sheet returned no active products");
     CATALOG = buildCatalogFromLive(products);
   } catch(err){
     // Sheet not connected yet, or the request failed — show the demo catalog
-    // instead of a broken page. Once the sheet link is pasted in, this stops firing.
+    // instead of a broken page. Once the Apps Script URL is pasted in, this stops firing.
     CATALOG = normalizeDemoCatalog();
   }
 }
@@ -170,16 +142,13 @@ async function loadCatalog(){
 function productCard(item){
   const off = Math.round(100 - (item.price/item.mrp)*100);
   const media = item.image_url
-    ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy" data-idx="0">`
+    ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">`
     : artSVG(item.art);
-  const dots = (item.images && item.images.length > 1)
-    ? `<div class="card__dots">${item.images.map((_,i)=>`<span class="card__dot ${i===0?"is-active":""}"></span>`).join("")}</div>`
-    : "";
   return `
-    <article class="card" data-id="${item.id}" ${item.images && item.images.length>1 ? `data-images='${JSON.stringify(item.images)}'` : ""}>
+    <article class="card" data-id="${item.id}">
+      <a class="card__link" href="product.html?id=${encodeURIComponent(item.id)}">
       <div class="card__art">
         ${media}
-        ${dots}
         ${item.tag ? `<span class="card__tag">${item.tag}</span>` : ""}
         ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ""}
       </div>
@@ -191,6 +160,9 @@ function productCard(item){
           <span class="price-mrp">${money(item.mrp)}</span>
           <span class="price-off">${off}% OFF</span>
         </div>
+      </div>
+      </a>
+      <div class="card__foot">
         <button class="btn-add" data-id="${item.id}">
           <span class="btn-add__label">Add to Bag</span>
           <span class="btn-add__check">Added ✓</span>
@@ -257,6 +229,8 @@ function renderCatalog(){
   const cat = CATALOG[activeTab];
   if(cat.comingSoon){
     host.innerHTML = comingSoonPanel(activeTab, cat.label);
+  } else if(cat.items.length === 0){
+    host.innerHTML = `<div class="empty-live"><p>New ${cat.label.toLowerCase()} styles landing here shortly — check back soon.</p></div>`;
   } else {
     host.innerHTML = `<div class="grid">${cat.items.map(productCard).join("")}</div>`;
   }
@@ -451,18 +425,6 @@ async function init(){
   document.getElementById("shopContent").addEventListener("click", e=>{
     const btn = e.target.closest(".btn-add");
     if(btn){ addToCart(btn.dataset.id, btn); return; }
-
-    const artBox = e.target.closest(".card__art");
-    const card = artBox?.closest(".card[data-images]");
-    if(artBox && card){
-      const images = JSON.parse(card.dataset.images);
-      const img = card.querySelector("img");
-      const dots = card.querySelectorAll(".card__dot");
-      let idx = (Number(img.dataset.idx) + 1) % images.length;
-      img.src = images[idx];
-      img.dataset.idx = idx;
-      dots.forEach((d,i)=> d.classList.toggle("is-active", i===idx));
-    }
   });
 
   document.getElementById("shopContent").addEventListener("submit", e=>{
