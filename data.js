@@ -8,7 +8,7 @@
 // further down is only the offline fallback shown if it can't be reached.
 // ==========================================================================
 
-const SHEET_DATA_URL = "PASTE-YOUR-APPS-SCRIPT-WEB-APP-URL-HERE";
+const SHEET_DATA_URL = "https://docs.google.com/spreadsheets/d/12uTBHRdFnQQsJWv4Ddzo3oTjEBpy6134bS_fG2DRKBI/edit?gid=1831772468#gid=1831772468";
 
 const ALWAYS_LIVE = ["tshirt", "oversized", "polo"]; // never show "Coming Soon", even with 0 items
 
