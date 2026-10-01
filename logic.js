@@ -396,15 +396,121 @@ function updateCollectionBadges(){
   });
 }
 
-// ---- wire up --------------------------------------------------------------
-async function init(){
-  await loadCatalog();
-  updateCollectionBadges();
-  renderTabs();
-  renderCatalog();
-  renderCart();
-  setupScrollSpy();
+// ---- product detail page ---------------------------------------------
+function getSimilarProducts(current, limit=4){
+  const sameCategory = [], others = [];
+  Object.keys(CATALOG).forEach(key=>{
+    CATALOG[key].items.forEach(p=>{
+      if(p.id === current.id) return;
+      (key === current.cat ? sameCategory : others).push(p);
+    });
+  });
+  return [...sameCategory, ...others].slice(0, limit);
+}
 
+function renderProductDetail(){
+  const host = document.getElementById("productDetail");
+  const id = new URLSearchParams(window.location.search).get("id");
+  const item = findItem(id);
+
+  if(!item){
+    host.innerHTML = `<div class="empty-live"><p>We couldn't find that product. <a href="index.html">← Back to shop</a></p></div>`;
+    return;
+  }
+
+  const images = (item.images && item.images.length) ? item.images : (item.image_url ? [item.image_url] : []);
+  const off = Math.round(100 - (item.price/item.mrp)*100);
+  const mainMedia = images.length ? `<img id="pdMainImg" src="${images[0]}" alt="${item.name}">` : artSVG(item.art);
+  const thumbs = images.length > 1
+    ? `<div class="pd-thumbs">${images.map((src,i)=>`<button class="pd-thumb ${i===0?"is-active":""}" data-idx="${i}"><img src="${src}" alt=""></button>`).join("")}</div>`
+    : "";
+  const similar = getSimilarProducts(item);
+
+  host.innerHTML = `
+    <div class="pd-grid">
+      <div class="pd-gallery">
+        <div class="pd-gallery__main">${mainMedia}</div>
+        ${thumbs}
+      </div>
+      <div class="pd-info">
+        ${item.tag ? `<p class="eyebrow">${item.tag}</p>` : ""}
+        ${item.badge ? `<span class="card__badge pd-badge">${item.badge}</span>` : ""}
+        <h1>${item.name}</h1>
+        <div class="pd-price">
+          <span class="price-now">${money(item.price)}</span>
+          <span class="price-mrp">${money(item.mrp)}</span>
+          <span class="price-off">${off}% OFF</span>
+        </div>
+        ${item.details ? `<p class="pd-details">${item.details}</p>` : ""}
+        <button class="btn-add pd-add" data-id="${item.id}">
+          <span class="btn-add__label">Add to Bag</span>
+          <span class="btn-add__check">Added ✓</span>
+        </button>
+      </div>
+    </div>
+    ${similar.length ? `
+    <div class="pd-similar">
+      <h2>You Might Also Like</h2>
+      <div class="grid">${similar.map(productCard).join("")}</div>
+    </div>` : ""}
+  `;
+
+  host.querySelectorAll(".pd-thumb").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = Number(btn.dataset.idx);
+      document.getElementById("pdMainImg").src = images[idx];
+      host.querySelectorAll(".pd-thumb").forEach((b,i)=> b.classList.toggle("is-active", i===idx));
+    });
+  });
+
+  host.querySelector(".pd-add")?.addEventListener("click", e=> addToCart(item.id, e.currentTarget));
+  host.querySelectorAll(".btn-add[data-id]").forEach(btn=>{
+    if(btn.classList.contains("pd-add")) return; // already wired above
+    btn.addEventListener("click", ()=> addToCart(btn.dataset.id, btn));
+  });
+
+  document.title = `${item.name} — Bandolera`;
+}
+
+// ---- shared UI: cart, bottom nav, header — needed on every page -----------
+function wireCommonUI(){
+  const onShopPage = !!document.getElementById("shop");
+  const goTo = (sectionId) => {
+    if(onShopPage) document.getElementById(sectionId).scrollIntoView({behavior:"smooth"});
+    else window.location.href = `index.html#${sectionId}`;
+  };
+
+  document.getElementById("cartBody").addEventListener("click", e=>{
+    const btn = e.target.closest("button[data-delta]");
+    if(!btn) return;
+    changeQty(btn.dataset.id, Number(btn.dataset.delta));
+  });
+
+  document.getElementById("cartIcon").addEventListener("click", ()=>toggleCart(true));
+  document.getElementById("cartClose").addEventListener("click", ()=>toggleCart(false));
+  document.getElementById("scrim").addEventListener("click", ()=>toggleCart(false));
+  document.getElementById("navBag").addEventListener("click", ()=>toggleCart(true));
+  document.getElementById("miniCartCta").addEventListener("click", ()=>toggleCart(true));
+
+  document.getElementById("navHome").addEventListener("click", ()=>{
+    if(onShopPage) window.scrollTo({top:0, behavior:"smooth"});
+    else window.location.href = "index.html";
+  });
+  document.getElementById("navShop").addEventListener("click", ()=> goTo("shop"));
+  document.getElementById("navDrops").addEventListener("click", ()=> goTo("brandmark"));
+
+  document.getElementById("checkoutBtn").addEventListener("click", ()=>{
+    if(cart.length === 0){ toast("Add something first 👀"); return; }
+    toast("Demo checkout — wire this to Cashfree when you're ready 🚀");
+  });
+
+  document.querySelectorAll("[data-scroll-shop]").forEach(el=>{
+    el.addEventListener("click", ()=> goTo("shop"));
+  });
+}
+
+// ---- index.html-only wiring ------------------------------------------
+function wireHomeUI(){
   document.getElementById("tabBar").addEventListener("click", e=>{
     const btn = e.target.closest(".tab");
     if(!btn) return;
@@ -437,31 +543,6 @@ async function init(){
     form.reset();
   });
 
-  document.getElementById("cartBody").addEventListener("click", e=>{
-    const btn = e.target.closest("button[data-delta]");
-    if(!btn) return;
-    changeQty(btn.dataset.id, Number(btn.dataset.delta));
-  });
-
-  document.getElementById("cartIcon").addEventListener("click", ()=>toggleCart(true));
-  document.getElementById("cartClose").addEventListener("click", ()=>toggleCart(false));
-  document.getElementById("scrim").addEventListener("click", ()=>toggleCart(false));
-  document.getElementById("navBag").addEventListener("click", ()=>toggleCart(true));
-  document.getElementById("miniCartCta").addEventListener("click", ()=>toggleCart(true));
-
-  document.getElementById("navHome").addEventListener("click", ()=> window.scrollTo({top:0, behavior:"smooth"}));
-  document.getElementById("navShop").addEventListener("click", ()=> document.getElementById("shop").scrollIntoView({behavior:"smooth"}));
-  document.getElementById("navDrops").addEventListener("click", ()=> document.getElementById("brandmark").scrollIntoView({behavior:"smooth"}));
-
-  document.getElementById("checkoutBtn").addEventListener("click", ()=>{
-    if(cart.length === 0){ toast("Add something first 👀"); return; }
-    toast("Demo checkout — wire this to Cashfree when you're ready 🚀");
-  });
-
-  document.querySelectorAll("[data-scroll-shop]").forEach(el=>{
-    el.addEventListener("click", ()=> document.getElementById("shop").scrollIntoView({behavior:"smooth"}));
-  });
-
   document.getElementById("contactForm").addEventListener("submit", e=>{
     e.preventDefault();
     const [nameInput, emailInput] = e.target.querySelectorAll("input");
@@ -470,6 +551,24 @@ async function init(){
     const body = encodeURIComponent(`${message}\n\n— ${nameInput.value} (${emailInput.value})`);
     window.location.href = `mailto:hello@bandolera.com?subject=${subject}&body=${body}`;
   });
+
+  setupScrollSpy();
+}
+
+// ---- wire up --------------------------------------------------------------
+async function init(){
+  await loadCatalog();
+  renderCart();
+  wireCommonUI();
+
+  if(document.getElementById("shop")){
+    updateCollectionBadges();
+    renderTabs();
+    renderCatalog();
+    wireHomeUI();
+  } else if(document.getElementById("productDetail")){
+    renderProductDetail();
+  }
 
   setupScrollReveal();
   setupTilt();

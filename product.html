@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bandolera — Product</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <a class="logo" href="index.html" style="text-decoration:none;">
+    <svg class="logo__mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoChrome" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F3F4F6"/>
+          <stop offset="0.5" stop-color="#8A8F99"/>
+          <stop offset="1" stop-color="#F3F4F6"/>
+        </linearGradient>
+      </defs>
+      <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z"
+            fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+      <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+      <path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" opacity="0.95"/>
+    </svg>
+    <span class="logo__word">BANDOLERA</span>
+  </a>
+  <nav class="nav-desktop">
+    <a href="index.html#collections">Collections</a>
+    <a href="index.html#shop">Shop</a>
+    <a href="index.html#story">Our Story</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  <button class="cart-icon" id="cartIcon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#18140F" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4" fill="#18140F"/><circle cx="17" cy="20" r="1.4" fill="#18140F"/></svg>
+    <span class="badge" id="cartCount">0</span>
+  </button>
+</header>
+
+<!-- ============ PRODUCT DETAIL ============ -->
+<div class="pd-wrap">
+  <a class="pd-back" href="index.html#shop">← Back to shop</a>
+  <div id="productDetail"><p style="color:var(--ink-dim)">Loading…</p></div>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <p>© 2026 Bandolera. Drop culture, delivered.</p>
+  <p>Made for the unbothered.</p>
+</footer>
+
+<!-- ============ STICKY MINI CART ============ -->
+<div class="mini-cart" id="miniCart">
+  <div class="mini-cart__info"><b id="miniCartCount">0</b> items · <b id="miniCartTotal">₹0</b></div>
+  <button class="mini-cart__cta" id="miniCartCta">View Bag</button>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottom-nav">
+  <button class="nav-btn" id="navHome">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+    Home
+  </button>
+  <button class="nav-btn is-active" id="navShop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2l1.5 4h9L18 2"/><rect x="4" y="6" width="16" height="15" rx="2"/><path d="M9 10a3 3 0 006 0"/></svg>
+    Shop
+  </button>
+  <button class="nav-btn" id="navDrops">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1z"/></svg>
+    Drops
+  </button>
+  <button class="nav-btn" id="navBag">
+    <span class="nav-btn__dot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/></svg>
+      <span class="nav-btn__badge" id="navBagBadge">0</span>
+    </span>
+    Bag
+  </button>
+</nav>
+
+<!-- ============ CART DRAWER ============ -->
+<div class="scrim" id="scrim"></div>
+<aside class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer__grabber"></div>
+  <div class="cart-drawer__head">
+    <h3>Your Bag</h3>
+    <button id="cartClose">×</button>
+  </div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-drawer__foot">
+    <div class="cart-drawer__totalrow"><span>Subtotal</span><strong id="cartTotal">₹0</strong></div>
+    <button class="checkout-btn" id="checkoutBtn">Checkout</button>
+  </div>
+</aside>
+
+<div id="toastHost"></div>
+
+<script src="data.js"></script>
+<script src="logic.js"></script>
+</body>
+</html>
