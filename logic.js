@@ -549,7 +549,7 @@ function wireHomeUI(){
     const message = e.target.querySelector("textarea").value;
     const subject = encodeURIComponent(`Message from ${nameInput.value} via Bandolera site`);
     const body = encodeURIComponent(`${message}\n\n— ${nameInput.value} (${emailInput.value})`);
-    window.location.href = `mailto:hello@bandolera.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@bandolera.com?subject=${subject}&body=${body}`;
   });
 
   setupScrollSpy();
