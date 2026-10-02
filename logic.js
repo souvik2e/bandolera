@@ -708,7 +708,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newCheckoutBtn.disabled = true;
 
         // 1. Fetch secure order payload out of your active Cloudflare Worker link
-        const response = await fetch("https://workers.dev", {
+        const response = await fetch("https://bandolera.byme.workers.dev", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json"
