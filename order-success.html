@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — Bandolera</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.success-wrap{
+  min-height: 70vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding: 40px 22px;
+  max-width: 520px; margin: 0 auto;
+}
+.success-icon{
+  width:72px; height:72px; border-radius:50%;
+  background: var(--good-bg, #EAF7EF);
+  display:flex; align-items:center; justify-content:center;
+  margin: 0 auto 22px; font-size:34px;
+}
+.success-wrap h1{
+  font-family: var(--font-d); font-weight:600;
+  font-size: clamp(26px,5vw,34px); margin:0 0 12px;
+}
+.success-wrap p{ color: var(--ink-dim); font-size:15px; line-height:1.6; margin:0 0 28px; }
+.success-id{
+  font-family: var(--font-m); font-size:12px; color: var(--ink-dim);
+  background: var(--bg-soft, #F6F1E7); padding:10px 18px; border-radius:20px;
+  margin-bottom:28px; display:inline-block;
+}
+.success-btn{
+  display:inline-block; background: var(--ink); color:#fff; text-decoration:none;
+  padding:14px 30px; border-radius:26px; font-weight:700; font-size:13.5px;
+  text-transform:uppercase; letter-spacing:.05em;
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="index.html" style="text-decoration:none;">
+    <svg class="logo__mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoChrome" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F3F4F6"/>
+          <stop offset="0.5" stop-color="#8A8F99"/>
+          <stop offset="1" stop-color="#F3F4F6"/>
+        </linearGradient>
+      </defs>
+      <path d="M50 4 L92 22 V58 C92 80 74 92 50 96 C26 92 8 80 8 58 V22 Z"
+            fill="#0D0D0F" stroke="#C81E3A" stroke-width="2.5" stroke-dasharray="4 3"/>
+      <text x="50" y="70" text-anchor="middle" font-family="Anton" font-size="58" fill="url(#logoChrome)">B</text>
+      <path d="M62 20 L46 52 H58 L40 84 L70 46 H56 Z" fill="#3EE8E0" opacity="0.95"/>
+    </svg>
+    <span class="logo__word">BANDOLERA</span>
+  </a>
+</header>
+
+<div class="success-wrap">
+  <div class="success-icon">✓</div>
+  <h1>Order Confirmed!</h1>
+  <p>Your payment went through and your order is with us. We'll reach out on WhatsApp with your tracking details shortly.</p>
+  <p class="success-id" id="paymentId">Payment ID: loading…</p>
+  <a class="success-btn" href="index.html">Continue Shopping</a>
+</div>
+
+<footer class="site-footer">
+  <p>© 2026 Bandolera. Drop culture, delivered.</p>
+  <p>Made for the unbothered.</p>
+</footer>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const pid = params.get("payment_id");
+  if(pid) document.getElementById("paymentId").textContent = "Payment ID: " + pid;
+</script>
+</body>
+</html>

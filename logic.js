@@ -499,9 +499,77 @@ function wireCommonUI(){
   document.getElementById("navShop").addEventListener("click", ()=> goTo("shop"));
   document.getElementById("navDrops").addEventListener("click", ()=> goTo("brandmark"));
 
-  document.getElementById("checkoutBtn").addEventListener("click", ()=>{
+  document.getElementById("checkoutBtn").addEventListener("click", async ()=>{
     if(cart.length === 0){ toast("Add something first 👀"); return; }
-    toast("Demo checkout — wire this to Cashfree when you're ready 🚀");
+
+    const btn = document.getElementById("checkoutBtn");
+    btn.disabled = true;
+    btn.textContent = "Processing…";
+
+    try {
+      // Step 1 — create order on our server (secret key stays server-side)
+      const total = cartTotal(); // in rupees
+      const res = await fetch("/api/payment?action=create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total * 100,          // Razorpay expects paise (₹1 = 100 paise)
+          currency: "INR",
+          receipt: `bdlr_${Date.now()}`,
+        }),
+      });
+      const data = await res.json();
+      if(!data.ok) throw new Error(data.error || "Order creation failed");
+
+      // Step 2 — open Razorpay checkout popup
+      const options = {
+        key: data.key_id,              // returned from server so it's not hardcoded
+        amount: data.amount,
+        currency: data.currency,
+        name: "Bandolera",
+        description: `${cartCount()} item${cartCount()>1?"s":""}`,
+        order_id: data.order_id,
+        theme: { color: "#C81E3A" },
+        handler: async function(response) {
+          // Step 3 — verify payment signature on our server
+          const verifyRes = await fetch("/api/payment?action=verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id:  response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if(verifyData.ok){
+            cart = [];
+            renderCart();
+            toggleCart(false);
+            window.location.href = `order-success.html?payment_id=${response.razorpay_payment_id}`;
+          } else {
+            toast("Payment verification failed. Please contact us.");
+          }
+        },
+        modal: {
+          ondismiss: function(){
+            btn.disabled = false;
+            btn.textContent = "Checkout";
+          }
+        }
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function(){
+        toast("Payment failed. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "Checkout";
+      });
+      rzp.open();
+    } catch(err) {
+      toast("Something went wrong. Please try again.");
+      btn.disabled = false;
+      btn.textContent = "Checkout";
+    }
   });
 
   document.querySelectorAll("[data-scroll-shop]").forEach(el=>{
@@ -549,7 +617,7 @@ function wireHomeUI(){
     const message = e.target.querySelector("textarea").value;
     const subject = encodeURIComponent(`Message from ${nameInput.value} via Bandolera site`);
     const body = encodeURIComponent(`${message}\n\n— ${nameInput.value} (${emailInput.value})`);
-    window.location.href = `mailto:contact@bandolera.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:hello@bandolera.com?subject=${subject}&body=${body}`;
   });
 
   setupScrollSpy();
