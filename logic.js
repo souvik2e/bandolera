@@ -675,3 +675,69 @@ function setupTilt(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ==========================================================================
+// BANDOLERA — SECURE PAYMENTS SYSTEM TRIGGER
+// Ties the 'Checkout' button to your live Cloudflare payment worker vault
+// ==========================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener("click", async () => {
+      const totalTextElement = document.getElementById("cartTotal");
+      if (!totalTextElement) return;
+
+      // Extract raw numbers from the currency display text string
+      const numericAmount = parseFloat(totalTextElement.innerText.replace(/[^0-9.]/g, ''));
+      
+      if (!numericAmount || numericAmount <= 0) {
+        alert("Your bag is empty! Add items to checkout.");
+        return;
+      }
+
+      try {
+        checkoutBtn.innerText = "Processing...";
+        checkoutBtn.disabled = true;
+
+        // 1. Send the checkout cost securely to your active worker link
+        const response = await fetch("https://workers.dev", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: numericAmount, currency: "INR" })
+        });
+        
+        if (!response.ok) throw new Error("Payment gateway connection dropped");
+        const order = await response.json();
+
+        // 2. Open the official Razorpay checkout layout modal view
+        const options = {
+          "key": "rzp_test_TiarVgXZgGt9Av", // Your exact public Razorpay Key ID
+          "amount": order.amount,
+          "currency": "INR",
+          "name": "BANDOLERA",
+          "description": "Store Purchase Checkout",
+          "order_id": order.id, 
+          "handler": function (rzpResponse) {
+            alert("Payment Successful! Tracking ID: " + rzpResponse.razorpay_payment_id);
+            if (typeof clearCart === "function") clearCart();
+          },
+          "theme": {
+            "color": "#211F1C" // Deep dark charcoal to match your theme
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+      } catch (error) {
+        console.error("Checkout process encountered an issue:", error);
+        alert("Payment initialization failed. Please try again shortly.");
+      } finally {
+        checkoutBtn.innerText = "Checkout";
+        checkoutBtn.disabled = false;
+      }
+    });
+  }
+});
