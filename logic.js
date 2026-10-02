@@ -677,19 +677,25 @@ function setupTilt(){
 document.addEventListener("DOMContentLoaded", init);
 
 // ==========================================================================
-// BANDOLERA — SECURE PAYMENTS SYSTEM TRIGGER
-// Ties the 'Checkout' button to your live Cloudflare payment worker vault
+// BANDOLERA — PERFECT SECURE PAYMENTS SYSTEM TRIGGER
+// Connected directly to your live Cloudflare Worker API
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
   const checkoutBtn = document.getElementById("checkoutBtn");
   
   if (checkoutBtn) {
-    checkoutBtn.addEventListener("click", async () => {
+    // Clean up older duplicate event listeners by replacing the button with a fresh copy
+    const newCheckoutBtn = checkoutBtn.cloneNode(true);
+    checkoutBtn.parentNode.replaceChild(newCheckoutBtn, checkoutBtn);
+
+    newCheckoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      
       const totalTextElement = document.getElementById("cartTotal");
       if (!totalTextElement) return;
 
-      // Extract raw numbers from the currency display text string
+      // Extract raw digits from currency strings (converts "₹899" to 899)
       const numericAmount = parseFloat(totalTextElement.innerText.replace(/[^0-9.]/g, ''));
       
       if (!numericAmount || numericAmount <= 0) {
@@ -698,33 +704,35 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       try {
-        checkoutBtn.innerText = "Processing...";
-        checkoutBtn.disabled = true;
+        newCheckoutBtn.innerText = "Processing...";
+        newCheckoutBtn.disabled = true;
 
-        // 1. Send the checkout cost securely to your active worker link
+        // 1. Fetch secure order payload out of your active Cloudflare Worker link
         const response = await fetch("https://workers.dev", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({ amount: numericAmount, currency: "INR" })
         });
         
-        if (!response.ok) throw new Error("Payment gateway connection dropped");
+        if (!response.ok) throw new Error("Payment worker gateway returned an error response status");
         const order = await response.json();
 
-        // 2. Open the official Razorpay checkout layout modal view
+        // 2. Open the official Razorpay checkout layout slider window layout configuration parameters
         const options = {
-          "key": "rzp_test_TiarVgXZgGt9Av", // Your exact public Razorpay Key ID
+          "key": "rzp_test_TiarVgXZgGt9Av", // Your exact public Razorpay Key ID string
           "amount": order.amount,
           "currency": "INR",
           "name": "BANDOLERA",
-          "description": "Store Purchase Checkout",
+          "description": "Store Purchase Checkout Summary",
           "order_id": order.id, 
           "handler": function (rzpResponse) {
             alert("Payment Successful! Tracking ID: " + rzpResponse.razorpay_payment_id);
             if (typeof clearCart === "function") clearCart();
           },
           "theme": {
-            "color": "#211F1C" // Deep dark charcoal to match your theme
+            "color": "#211F1C" // Deep dark charcoal to match your layout accent aesthetic
           }
         };
 
@@ -732,12 +740,13 @@ document.addEventListener("DOMContentLoaded", () => {
         rzp.open();
 
       } catch (error) {
-        console.error("Checkout process encountered an issue:", error);
+        console.error("Checkout process caught a network configuration error:", error);
         alert("Payment initialization failed. Please try again shortly.");
       } finally {
-        checkoutBtn.innerText = "Checkout";
-        checkoutBtn.disabled = false;
+        newCheckoutBtn.innerText = "Checkout";
+        newCheckoutBtn.disabled = false;
       }
     });
   }
 });
+
