@@ -509,7 +509,7 @@ function wireCommonUI(){
     try {
       // Step 1 — create order on our server (secret key stays server-side)
       const total = cartTotal(); // in rupees
-      const res = await fetch("https://bandolera-shop.byme.workers.dev", {
+      const res = await fetch("https://bandolera-shop.byme.workers.dev?action=create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -532,7 +532,7 @@ function wireCommonUI(){
         theme: { color: "#C81E3A" },
         handler: async function(response) {
           // Step 3 — verify payment signature on our server
-          const verifyRes = await fetch("/api/payment?action=verify", {
+          const verifyRes = await fetch("https://bandolera-shop.byme.workers.dev?action=verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -675,4 +675,3 @@ function setupTilt(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
-
