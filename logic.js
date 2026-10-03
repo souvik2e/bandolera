@@ -509,7 +509,7 @@ function wireCommonUI(){
     try {
       // Step 1 — create order on our server (secret key stays server-side)
       const total = cartTotal(); // in rupees
-      const res = await fetch("/api/payment?action=create", {
+      const res = await fetch("https://bandolera-shop.byme.workers.dev", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
