@@ -83,6 +83,9 @@ function buildCatalogFromLive(products){
       details: p.details || "", images: images,
       image_url: images[0] || null,
       art: images[0] ? null : pickArt(p.name),
+      bestseller:  p.bestseller  || false,
+      offer_label: p.offer_label || null,
+      promo_codes: p.promo_codes || [],
     });
   });
   Object.keys(cats).forEach(k => {
@@ -108,17 +111,21 @@ function normalizeDemoCatalog(){
 }
 
 function normalizeRow(obj, idx){
+  const promoCodes = (obj.promo_codes || "").split("|").map(s=>s.trim()).filter(Boolean);
   return {
-    id: obj.id || `row-${idx}`,
-    name: obj.name,
-    category: String(obj.category || "").toLowerCase().trim(),
-    style: obj.style,
-    price: Number(obj.price) || 0,
-    mrp: Number(obj.mrp) || 0,
-    details: obj.details,
-    images: obj.images,
-    badge: obj.badge,
-    active: /^(true|yes|1)$/i.test(String(obj.active || "").trim()),
+    id:          obj.id || `row-${idx}`,
+    name:        obj.name,
+    category:    String(obj.category || "").toLowerCase().trim(),
+    style:       obj.style,
+    price:       Number(obj.price) || 0,
+    mrp:         Number(obj.mrp) || 0,
+    details:     obj.details,
+    images:      obj.images,
+    badge:       obj.badge,
+    active:      /^(true|yes|1)$/i.test(String(obj.active     || "").trim()),
+    bestseller:  /^(true|yes|1)$/i.test(String(obj.bestseller || "").trim()),
+    offer_label: obj.offer_label || null,
+    promo_codes: promoCodes,
   };
 }
 
@@ -145,12 +152,13 @@ function productCard(item){
     ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">`
     : artSVG(item.art);
   return `
-    <article class="card" data-id="${item.id}">
+    <article class="card${item.bestseller?" card--bestseller":""}" data-id="${item.id}">
       <a class="card__link" href="product.html?id=${encodeURIComponent(item.id)}">
       <div class="card__art">
         ${media}
         ${item.tag ? `<span class="card__tag">${item.tag}</span>` : ""}
         ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ""}
+        ${item.bestseller ? `<span class="card__ribbon">★ Bestseller</span>` : ""}
       </div>
       <div class="card__body">
         <h3 class="card__name">${item.name}</h3>
@@ -160,6 +168,7 @@ function productCard(item){
           <span class="price-mrp">${money(item.mrp)}</span>
           <span class="price-off">${off}% OFF</span>
         </div>
+        ${item.offer_label ? `<div class="card__offer">🏷 ${item.offer_label}</div>` : ""}
       </div>
       </a>
       <div class="card__foot">
@@ -434,14 +443,29 @@ function renderProductDetail(){
       </div>
       <div class="pd-info">
         ${item.tag ? `<p class="eyebrow">${item.tag}</p>` : ""}
-        ${item.badge ? `<span class="card__badge pd-badge">${item.badge}</span>` : ""}
+        <div class="pd-badges">
+          ${item.badge ? `<span class="card__badge pd-badge">${item.badge}</span>` : ""}
+          ${item.bestseller ? `<span class="pd-best-tag">★ Bestseller</span>` : ""}
+        </div>
         <h1>${item.name}</h1>
         <div class="pd-price">
           <span class="price-now">${money(item.price)}</span>
           <span class="price-mrp">${money(item.mrp)}</span>
           <span class="price-off">${off}% OFF</span>
         </div>
+        ${item.offer_label ? `<div class="pd-offer">🏷 ${item.offer_label}</div>` : ""}
         ${item.details ? `<p class="pd-details">${item.details}</p>` : ""}
+        ${item.promo_codes && item.promo_codes.length ? `
+        <div class="pd-promos">
+          <p class="pd-promos__label">Available Coupon Codes:</p>
+          <div class="pd-promos__list">
+            ${item.promo_codes.map(code=>`
+              <button class="pd-promo-code" onclick="navigator.clipboard.writeText('${code}');this.textContent='Copied!';setTimeout(()=>this.textContent='${code}',1500)">
+                ${code}
+              </button>`).join("")}
+          </div>
+          <p class="pd-promos__note">Tap any code to copy — apply at checkout</p>
+        </div>` : ""}
         <button class="btn-add pd-add" data-id="${item.id}">
           <span class="btn-add__label">Add to Bag</span>
           <span class="btn-add__check">Added ✓</span>
@@ -509,7 +533,7 @@ function wireCommonUI(){
     try {
       // Step 1 — create order on our server (secret key stays server-side)
       const total = cartTotal(); // in rupees
-      const res = await fetch("https://bandolera-shop.byme.workers.dev?action=create", {
+      const res = await fetch("https://bandolera-shop.byme.workers.dev/?action=create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -532,7 +556,7 @@ function wireCommonUI(){
         theme: { color: "#C81E3A" },
         handler: async function(response) {
           // Step 3 — verify payment signature on our server
-          const verifyRes = await fetch("https://bandolera-shop.byme.workers.dev?action=verify", {
+          const verifyRes = await fetch("https://bandolera-shop.byme.workers.dev/?action=verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -617,7 +641,7 @@ function wireHomeUI(){
     const message = e.target.querySelector("textarea").value;
     const subject = encodeURIComponent(`Message from ${nameInput.value} via Bandolera site`);
     const body = encodeURIComponent(`${message}\n\n— ${nameInput.value} (${emailInput.value})`);
-    window.location.href = `mailto:hello@bandolera.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:contact@bandolera.com?subject=${subject}&body=${body}`;
   });
 
   setupScrollSpy();
