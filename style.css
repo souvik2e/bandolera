@@ -571,3 +571,33 @@ a{ color:inherit; }
   border:1px solid var(--ink); border-radius:8px; padding:7px 12px; cursor:pointer;
 }
 .pd-promos__note{ font-size:11px; color:var(--ink-dim); margin:10px 0 0; }
+
+/* ================= ADDRESS / CHECKOUT MODAL ================= */
+.addr-modal{
+  position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; justify-content:center;
+  background:rgba(24,20,15,.5); opacity:0; transition:opacity .2s ease;
+}
+.addr-modal.is-open{ opacity:1; }
+.addr-card{
+  background: var(--surface-solid); width:100%; max-width:540px; max-height:92vh; overflow-y:auto;
+  border-radius:20px 20px 0 0; padding:22px 20px calc(22px + var(--safe-b));
+  transform:translateY(24px); transition:transform .25s ease;
+}
+.addr-modal.is-open .addr-card{ transform:none; }
+@media (min-width:700px){ .addr-modal{ align-items:center; } .addr-card{ border-radius:20px; } }
+.addr-card h3{ font-family: var(--font-d); font-weight:600; font-size:22px; margin:0 0 4px; }
+.addr-sub{ color: var(--ink-dim); font-size:13px; margin:0 0 16px; }
+.addr-grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+@media (min-width:480px){ .addr-grid{ grid-template-columns:1fr 1fr; } .addr-field.full{ grid-column:1/-1; } }
+.addr-field{ display:flex; flex-direction:column; gap:5px; }
+.addr-field span{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color: var(--ink-dim); }
+.addr-field input, .addr-field textarea{
+  padding:12px 13px; border-radius:10px; border:1px solid var(--line-strong);
+  font-family: var(--font-b); font-size:16px; color: var(--ink); background: var(--bg); resize:vertical;
+}
+.addr-field input:focus, .addr-field textarea:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+.addr-remember{ display:flex; align-items:center; gap:8px; font-size:12.5px; color: var(--ink-dim); margin-top:14px; }
+.addr-error{ color: var(--crimson); font-size:12.5px; font-weight:600; min-height:18px; margin:10px 0 0; }
+.addr-actions{ display:flex; gap:10px; margin-top:12px; }
+.addr-cancel{ background:none; border:1px solid var(--line-strong); border-radius:26px; padding:14px 20px; font-weight:600; font-size:13px; color: var(--ink); }
+.addr-pay{ flex:1; background: var(--ink); color:#fff; border:none; border-radius:26px; padding:14px; font-weight:700; font-size:13.5px; text-transform:uppercase; letter-spacing:.04em; }
