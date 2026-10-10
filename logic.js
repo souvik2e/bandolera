@@ -131,7 +131,7 @@ function normalizeRow(obj, idx){
 
 async function loadCatalog(){
   try{
-    if(!SHEET_DATA_URL || SHEET_DATA_URL.includes("PASTE-YOUR")) throw new Error("sheet not connected yet");
+    if(!SHEET_DATA_URL || SHEET_DATA_URL.includes("https://script.google.com/macros/s/AKfycbxSfxHB5APfHAh9oTJqlwWX8ZYLokNQsgvcPhKJIFDmRFUmJ5zNLhk3KtHbDFDnOToH/exec")) throw new Error("sheet not connected yet");
     const res = await fetch(`${SHEET_DATA_URL}?t=${Date.now()}`);
     if(!res.ok) throw new Error("sheet unreachable");
     const rows = await res.json();
