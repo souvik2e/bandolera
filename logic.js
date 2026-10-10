@@ -113,7 +113,7 @@ function normalizeDemoCatalog(){
 function normalizeRow(obj, idx){
   const promoCodes = (obj.promo_codes || "").split("|").map(s=>s.trim()).filter(Boolean);
   return {
-    id:          obj.id || `row-${idx}`,
+    id:          String(obj.id || `row-${idx}`),
     name:        obj.name,
     category:    String(obj.category || "").toLowerCase().trim(),
     style:       obj.style,
@@ -131,7 +131,7 @@ function normalizeRow(obj, idx){
 
 async function loadCatalog(){
   try{
-    if(!SHEET_DATA_URL || SHEET_DATA_URL.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vQq2CyYeu06nM0Nx6T0PfaxXrtXWf6dSsGakXFhXwztw5QGMR2S2ZYns5nOlhEtSpziA3EmhUR5m1Dv/pub?output=csv")) throw new Error("sheet not connected yet");
+    if(!SHEET_DATA_URL || SHEET_DATA_URL.includes("PASTE-YOUR")) throw new Error("sheet not connected yet");
     const res = await fetch(`${SHEET_DATA_URL}?t=${Date.now()}`);
     if(!res.ok) throw new Error("sheet unreachable");
     const rows = await res.json();
@@ -496,6 +496,157 @@ function renderProductDetail(){
   document.title = `${item.name} — Bandolera`;
 }
 
+// ---- checkout: delivery form -> Razorpay -> verified order ---------------
+const PAYMENT_API   = "https://bandolera-shop.byme.workers.dev/";  // your payment Worker
+const CONTACT_EMAIL = "contact@bandolera.com";                        // contact form goes here
+const CUSTOMER_KEY  = "bdlr_customer";
+
+function loadSavedCustomer(){
+  try{ return JSON.parse(localStorage.getItem(CUSTOMER_KEY) || "null") || {}; }catch(e){ return {}; }
+}
+function saveCustomer(c){ try{ localStorage.setItem(CUSTOMER_KEY, JSON.stringify(c)); }catch(e){} }
+function forgetCustomer(){ try{ localStorage.removeItem(CUSTOMER_KEY); }catch(e){} }
+
+function validateCustomerFields(c){
+  if(c.name.length < 2) return "Please enter your full name";
+  if(!/^[6-9]\d{9}$/.test(c.phone)) return "Enter a valid 10-digit mobile number";
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email)) return "Enter a valid email address";
+  if(c.address.length < 8) return "Please enter your full address";
+  if(c.city.length < 2) return "Please enter your city";
+  if(c.state.length < 2) return "Please enter your state";
+  if(!/^[1-9]\d{5}$/.test(c.pincode)) return "Enter a valid 6-digit pincode";
+  return "";
+}
+
+function openAddressModal(){
+  return new Promise(resolve=>{
+    const wrap = document.createElement("div");
+    wrap.className = "addr-modal";
+    wrap.innerHTML = `
+      <div class="addr-card" role="dialog" aria-modal="true" aria-labelledby="addrTitle">
+        <h3 id="addrTitle">Delivery details</h3>
+        <p class="addr-sub">Where should we send your order?</p>
+        <form id="addrForm" novalidate>
+          <div class="addr-grid">
+            <label class="addr-field full"><span>Full name</span><input name="name" autocomplete="name"></label>
+            <label class="addr-field"><span>Mobile number</span><input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit number"></label>
+            <label class="addr-field"><span>Email</span><input name="email" type="email" autocomplete="email"></label>
+            <label class="addr-field full"><span>Full address</span><textarea name="address" rows="2" autocomplete="street-address" placeholder="House no, street, area, landmark"></textarea></label>
+            <label class="addr-field"><span>City</span><input name="city" autocomplete="address-level2"></label>
+            <label class="addr-field"><span>State</span><input name="state" autocomplete="address-level1"></label>
+            <label class="addr-field"><span>Pincode</span><input name="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code"></label>
+          </div>
+          <label class="addr-remember"><input type="checkbox" name="remember" checked> Remember my details on this device</label>
+          <p class="addr-error" id="addrError" role="alert"></p>
+          <div class="addr-actions">
+            <button type="button" class="addr-cancel">Cancel</button>
+            <button type="submit" class="addr-pay">Pay ${money(cartTotal())}</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(wrap);
+
+    const form = wrap.querySelector("#addrForm");
+    const f = n => form.querySelector(`[name="${n}"]`);
+    const saved = loadSavedCustomer();
+    ["name","phone","email","address","city","state","pincode"].forEach(n => { f(n).value = saved[n] || ""; });
+
+    const onKey = e => { if(e.key === "Escape") close(null); };
+    function close(val){
+      document.removeEventListener("keydown", onKey);
+      wrap.classList.remove("is-open");
+      setTimeout(()=> wrap.remove(), 200);
+      resolve(val);
+    }
+    document.addEventListener("keydown", onKey);
+    wrap.addEventListener("click", e => { if(e.target === wrap) close(null); });
+    wrap.querySelector(".addr-cancel").addEventListener("click", ()=> close(null));
+
+    form.addEventListener("submit", e=>{
+      e.preventDefault();
+      const customer = {
+        name: f("name").value.trim(),
+        phone: f("phone").value.replace(/\D/g,"").slice(-10),
+        email: f("email").value.trim(),
+        address: f("address").value.trim(),
+        city: f("city").value.trim(),
+        state: f("state").value.trim(),
+        pincode: f("pincode").value.replace(/\D/g,""),
+      };
+      const err = validateCustomerFields(customer);
+      if(err){ wrap.querySelector("#addrError").textContent = err; return; }
+      if(f("remember").checked) saveCustomer(customer); else forgetCustomer();
+      close(customer);
+    });
+
+    requestAnimationFrame(()=> { wrap.classList.add("is-open"); f("name").focus(); });
+  });
+}
+
+async function startCheckout(){
+  if(cart.length === 0){ toast("Add something first 👀"); return; }
+  if(typeof window.Razorpay === "undefined"){ toast("Payment is still loading. Try again in a moment."); return; }
+
+  const btn = document.getElementById("checkoutBtn");
+  const reset = ()=>{ btn.disabled = false; btn.textContent = "Checkout"; };
+
+  const customer = await openAddressModal();
+  if(!customer) return;
+
+  btn.disabled = true;
+  btn.textContent = "Processing…";
+  try{
+    const items = cart.map(c => ({ id: String(c.id), qty: c.qty }));
+    const res = await fetch(`${PAYMENT_API}?action=create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, customer }),
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || "Could not start payment");
+
+    const rzp = new window.Razorpay({
+      key: data.key_id,
+      amount: data.amount,
+      currency: data.currency,
+      order_id: data.order_id,
+      name: "Bandolera",
+      description: `${cartCount()} item${cartCount() > 1 ? "s" : ""}`,
+      prefill: { name: customer.name, email: customer.email, contact: customer.phone },
+      theme: { color: "#C81E3A" },
+      handler: async function(response){
+        try{
+          const vr = await fetch(`${PAYMENT_API}?action=verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const v = await vr.json();
+          if(v.ok){
+            cart = [];
+            renderCart();
+            toggleCart(false);
+            window.location.href = `order-success.html?payment_id=${encodeURIComponent(response.razorpay_payment_id)}`;
+            return;
+          }
+        }catch(e){}
+        alert(`Your payment was received (ID: ${response.razorpay_payment_id}) but we could not confirm it automatically. Please contact us and quote this ID.`);
+        reset();
+      },
+      modal: { ondismiss: reset },
+    });
+    rzp.on("payment.failed", ()=>{ toast("Payment failed. Please try again."); reset(); });
+    rzp.open();
+  }catch(err){
+    toast(err.message || "Something went wrong. Please try again.");
+    reset();
+  }
+}
+
 // ---- shared UI: cart, bottom nav, header — needed on every page -----------
 function wireCommonUI(){
   const onShopPage = !!document.getElementById("shop");
@@ -523,78 +674,7 @@ function wireCommonUI(){
   document.getElementById("navShop").addEventListener("click", ()=> goTo("shop"));
   document.getElementById("navDrops").addEventListener("click", ()=> goTo("brandmark"));
 
-  document.getElementById("checkoutBtn").addEventListener("click", async ()=>{
-    if(cart.length === 0){ toast("Add something first 👀"); return; }
-
-    const btn = document.getElementById("checkoutBtn");
-    btn.disabled = true;
-    btn.textContent = "Processing…";
-
-    try {
-      // Step 1 — create order on our server (secret key stays server-side)
-      const total = cartTotal(); // in rupees
-      const res = await fetch("https://bandolera-shop.byme.workers.dev/?action=create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: total * 100,          // Razorpay expects paise (₹1 = 100 paise)
-          currency: "INR",
-          receipt: `bdlr_${Date.now()}`,
-        }),
-      });
-      const data = await res.json();
-      if(!data.ok) throw new Error(data.error || "Order creation failed");
-
-      // Step 2 — open Razorpay checkout popup
-      const options = {
-        key: data.key_id,              // returned from server so it's not hardcoded
-        amount: data.amount,
-        currency: data.currency,
-        name: "Bandolera",
-        description: `${cartCount()} item${cartCount()>1?"s":""}`,
-        order_id: data.order_id,
-        theme: { color: "#C81E3A" },
-        handler: async function(response) {
-          // Step 3 — verify payment signature on our server
-          const verifyRes = await fetch("https://bandolera-shop.byme.workers.dev/?action=verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id:  response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature:  response.razorpay_signature,
-            }),
-          });
-          const verifyData = await verifyRes.json();
-          if(verifyData.ok){
-            cart = [];
-            renderCart();
-            toggleCart(false);
-            window.location.href = `order-success.html?payment_id=${response.razorpay_payment_id}`;
-          } else {
-            toast("Payment verification failed. Please contact us.");
-          }
-        },
-        modal: {
-          ondismiss: function(){
-            btn.disabled = false;
-            btn.textContent = "Checkout";
-          }
-        }
-      };
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", function(){
-        toast("Payment failed. Please try again.");
-        btn.disabled = false;
-        btn.textContent = "Checkout";
-      });
-      rzp.open();
-    } catch(err) {
-      toast("Something went wrong. Please try again.");
-      btn.disabled = false;
-      btn.textContent = "Checkout";
-    }
-  });
+  document.getElementById("checkoutBtn").addEventListener("click", startCheckout);
 
   document.querySelectorAll("[data-scroll-shop]").forEach(el=>{
     el.addEventListener("click", ()=> goTo("shop"));
@@ -641,7 +721,7 @@ function wireHomeUI(){
     const message = e.target.querySelector("textarea").value;
     const subject = encodeURIComponent(`Message from ${nameInput.value} via Bandolera site`);
     const body = encodeURIComponent(`${message}\n\n— ${nameInput.value} (${emailInput.value})`);
-    window.location.href = `mailto:contact@bandolera.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
   });
 
   setupScrollSpy();
