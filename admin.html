@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Bandolera — Add Product</title>
+<style>
+:root{ --bg:#F6F1E7; --ink:#18140F; --dim:#756C5F; --line:#D9D2C3; --crimson:#C81E3A; --teal:#0E7C74; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap{ max-width:640px; margin:0 auto; padding:18px 16px 70px; }
+.top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.brand{ font-weight:800; letter-spacing:.06em; }
+.link{ background:none; border:none; color:var(--dim); font-size:13px; font-weight:600; text-decoration:underline; padding:6px; }
+.card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; }
+h1{ font-size:21px; margin:0 0 4px; }
+.sub{ color:var(--dim); font-size:13.5px; margin:0 0 6px; line-height:1.5; }
+.f{ display:block; margin-top:14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--dim); }
+input,select,textarea{ width:100%; margin-top:6px; padding:13px; border:1px solid var(--line); border-radius:10px; font-size:16px; font-family:inherit; background:#FBF9F4; color:var(--ink); }
+textarea{ min-height:96px; resize:vertical; }
+input:focus,select:focus,textarea:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+.row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+button{ font-family:inherit; cursor:pointer; }
+.btn{ width:100%; margin-top:18px; padding:16px; border:none; border-radius:28px; background:var(--ink); color:#fff; font-weight:700; font-size:14px; letter-spacing:.05em; text-transform:uppercase; }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+.btn.ghost{ background:none; color:var(--ink); border:1px solid var(--line); margin-top:10px; text-decoration:none; display:block; text-align:center; }
+.drop{ display:block; border:2px dashed var(--line); border-radius:14px; text-align:center; padding:24px 10px; font-weight:700; color:var(--ink); cursor:pointer; background:#FBF9F4; }
+.drop small{ display:block; font-weight:500; color:var(--dim); margin-top:4px; }
+.drop input{ display:none; }
+.thumbs{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+.thumb{ position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); aspect-ratio:1/1; background:#eee; }
+.thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.thumb .tag{ position:absolute; left:6px; top:6px; background:var(--ink); color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:12px; }
+.thumb .x{ position:absolute; right:6px; top:6px; width:26px; height:26px; border-radius:50%; border:none; background:rgba(255,255,255,.94); font-weight:700; font-size:15px; }
+.thumb .main{ position:absolute; left:6px; right:6px; bottom:6px; border:none; background:rgba(255,255,255,.94); border-radius:8px; font-size:11px; font-weight:700; padding:6px; }
+.count{ font-size:12.5px; color:var(--dim); margin-top:8px; }
+.off{ font-size:13px; color:var(--teal); font-weight:700; margin-top:8px; min-height:16px; }
+.check{ display:flex; gap:10px; align-items:center; margin-top:16px; font-size:14.5px; font-weight:600; }
+.check input{ width:20px; height:20px; margin:0; }
+.msg{ margin-top:14px; font-size:14px; font-weight:600; min-height:20px; line-height:1.45; }
+.msg.err{ color:var(--crimson); }
+.msg.info{ color:var(--teal); }
+.ok-icon{ width:56px; height:56px; border-radius:50%; background:#EAF7EF; color:#1C8A55; display:flex; align-items:center; justify-content:center; font-size:28px; margin:4px auto 12px; }
+.center{ text-align:center; }
+[hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brand">BANDOLERA · ADMIN</span>
+    <button class="link" id="logout" type="button" hidden>Log out</button>
+  </div>
+
+  <!-- ===== LOGIN ===== -->
+  <section class="card" id="login">
+    <h1>Welcome back</h1>
+    <p class="sub">Enter your admin password to add products.</p>
+    <form id="loginForm">
+      <label class="f" for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="btn" id="loginBtn" type="submit">Log in</button>
+      <p class="msg" id="loginMsg"></p>
+    </form>
+  </section>
+
+  <!-- ===== ADD PRODUCT ===== -->
+  <section class="card" id="app" hidden>
+    <h1>Add a product</h1>
+    <p class="sub">Pick the photos, fill in the details, tap Save. It goes live on the website within a minute.</p>
+
+    <label class="f">Photos</label>
+    <label class="drop" for="files">📷 Tap to choose photos<small>You can pick several at once. The first one is the main photo.</small></label>
+    <input id="files" type="file" accept="image/*" multiple>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="count" id="photoCount">No photos yet</div>
+
+    <label class="f" for="name">Product name</label>
+    <input id="name" placeholder="e.g. Black Oversized Tee" maxlength="100" autocomplete="off">
+
+    <label class="f" for="category">Category</label>
+    <select id="category"></select>
+
+    <label class="f" for="style">Style / fit <span style="text-transform:none;font-weight:500">(optional)</span></label>
+    <input id="style" placeholder="e.g. Crew neck, Drop shoulder" maxlength="60" autocomplete="off">
+
+    <div class="row">
+      <div>
+        <label class="f" for="price">Selling price (₹)</label>
+        <input id="price" type="number" inputmode="decimal" min="1" placeholder="899">
+      </div>
+      <div>
+        <label class="f" for="mrp">MRP (₹)</label>
+        <input id="mrp" type="number" inputmode="decimal" min="1" placeholder="1799">
+      </div>
+    </div>
+    <div class="off" id="offText"></div>
+
+    <label class="f" for="details">Details <span style="text-transform:none;font-weight:500">(fabric, fit, care)</span></label>
+    <textarea id="details" maxlength="600" placeholder="e.g. 240 GSM cotton, drop shoulder, machine washable"></textarea>
+
+    <div class="row">
+      <div>
+        <label class="f" for="badge">Badge</label>
+        <select id="badge">
+          <option value="">None</option>
+          <option>New</option>
+          <option>Bestseller</option>
+          <option>Low Stock</option>
+        </select>
+      </div>
+      <div>
+        <label class="f" for="offer">Offer tag <span style="text-transform:none;font-weight:500">(optional)</span></label>
+        <input id="offer" placeholder="e.g. 50% OFF Today" maxlength="40" autocomplete="off">
+      </div>
+    </div>
+
+    <label class="check"><input type="checkbox" id="bestseller"> Show the ★ Bestseller ribbon</label>
+
+    <button class="btn" id="save" type="button">Save product</button>
+    <p class="msg" id="msg"></p>
+  </section>
+
+  <!-- ===== DONE ===== -->
+  <section class="card center" id="done" hidden>
+    <div class="ok-icon">✓</div>
+    <h1>Product added</h1>
+    <p class="sub" id="doneText"></p>
+    <button class="btn" id="again" type="button">Add another product</button>
+    <a class="btn ghost" href="index.html" target="_blank" rel="noopener">Open the website</a>
+    <p class="sub" style="margin-top:14px">To change a price, hide a product or fix a typo later, edit it in your Google Sheet.</p>
+  </section>
+
+</div>
+
+<script>
+// The address of your payment Worker (same one used for checkout)
+const WORKER = "https://bandolera-shop.byme.workers.dev/";
+
+const CATS = [["tshirt","T-Shirts"],["oversized","Oversized"],["polo","Polo"],["hoodie","Hoodies"],["sweatshirt","Sweatshirts"]];
+const $ = (id) => document.getElementById(id);
+let pw = sessionStorage.getItem("bdlr_admin_pw") || "";
+let photos = [];            // { file, preview, url }
+let busy = false;
+
+$("category").innerHTML = CATS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+
+function show(name){
+  ["login","app","done"].forEach(n => { $(n).hidden = (n !== name); });
+  $("logout").hidden = (name === "login");
+}
+function setMsg(id, text, kind){
+  const el = $(id); el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : "");
+}
+function friendly(e){
+  const m = String(e && e.message || e);
+  if (/failed to fetch|networkerror|load failed/i.test(m)) return "Can't reach the server. Check your internet connection.";
+  return m;
+}
+
+async function api(action, body, headers){
+  const res = await fetch(`${WORKER}?action=${action}`, {
+    method: "POST",
+    headers: Object.assign({ "x-admin-password": pw }, headers || {}),
+    body,
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || `The server answered ${res.status}`);
+  return data;
+}
+
+// ---------- login ----------
+async function tryLogin(silent){
+  try {
+    const out = await api("admin_check");
+    show("app");
+    if (!out.image_storage_connected) setMsg("msg", "Photo storage is not connected yet — ask your developer to add the IMAGES binding.", "err");
+    return true;
+  } catch (e) {
+    if (!silent) setMsg("loginMsg", friendly(e), "err");
+    sessionStorage.removeItem("bdlr_admin_pw"); pw = "";
+    return false;
+  }
+}
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  pw = $("pw").value;
+  $("loginBtn").disabled = true; setMsg("loginMsg", "Checking…", "info");
+  const ok = await tryLogin(false);
+  if (ok) { sessionStorage.setItem("bdlr_admin_pw", pw); setMsg("loginMsg", ""); }
+  $("loginBtn").disabled = false;
+});
+$("logout").addEventListener("click", () => {
+  sessionStorage.removeItem("bdlr_admin_pw"); pw = ""; $("pw").value = ""; show("login");
+});
+if (pw) tryLogin(true);
+
+// ---------- photos ----------
+$("files").addEventListener("change", (e) => {
+  for (const f of Array.from(e.target.files || [])) {
+    if (photos.length >= 8) { setMsg("msg", "Maximum 8 photos per product.", "err"); break; }
+    if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)) continue;
+    photos.push({ file: f, preview: URL.createObjectURL(f), url: null });
+  }
+  e.target.value = "";
+  renderThumbs();
+});
+function renderThumbs(){
+  const box = $("thumbs"); box.textContent = "";
+  photos.forEach((p, i) => {
+    const d = document.createElement("div"); d.className = "thumb";
+    const im = document.createElement("img"); im.src = p.preview; im.alt = "Photo " + (i + 1); d.appendChild(im);
+    if (i === 0) {
+      const t = document.createElement("span"); t.className = "tag"; t.textContent = "Main photo"; d.appendChild(t);
+    } else {
+      const m = document.createElement("button"); m.type = "button"; m.className = "main"; m.textContent = "Make main";
+      m.dataset.act = "main"; m.dataset.i = i; d.appendChild(m);
+    }
+    const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "×";
+    x.dataset.act = "del"; x.dataset.i = i; x.setAttribute("aria-label", "Remove photo"); d.appendChild(x);
+    box.appendChild(d);
+  });
+  $("photoCount").textContent = photos.length ? `${photos.length} photo${photos.length > 1 ? "s" : ""} selected` : "No photos yet";
+}
+$("thumbs").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-act]"); if (!b || busy) return;
+  const i = Number(b.dataset.i);
+  if (b.dataset.act === "del") photos.splice(i, 1);
+  else { const [p] = photos.splice(i, 1); photos.unshift(p); }
+  renderThumbs();
+});
+
+// shrink each photo before uploading (phone photos are huge)
+async function decode(file){
+  if (window.createImageBitmap) { try { return await createImageBitmap(file); } catch (e) {} }
+  return await new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("unreadable"));
+    im.src = URL.createObjectURL(file);
+  });
+}
+async function compress(file){
+  let src;
+  try { src = await decode(file); }
+  catch (e) { throw new Error("Could not read one of the photos. Please choose a JPG or PNG."); }
+  const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height;
+  const scale = Math.min(1, 1400 / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(src, 0, 0, w, h);
+  let q = 0.85, blob = null;
+  for (let i = 0; i < 5; i++) {
+    blob = await new Promise((r) => c.toBlob(r, "image/jpeg", q));
+    if (blob && blob.size <= 450000) break;
+    q -= 0.12;
+  }
+  if (!blob) throw new Error("Could not prepare one of the photos.");
+  if (blob.size > 1900000) throw new Error("A photo is too large even after shrinking. Please choose a smaller one.");
+  return blob;
+}
+
+// ---------- discount preview ----------
+function updateOff(){
+  const p = Number($("price").value), m = Number($("mrp").value);
+  $("offText").textContent = (p > 0 && m > p) ? `Customers will see ${Math.round(100 - (p / m) * 100)}% OFF` : "";
+}
+$("price").addEventListener("input", updateOff);
+$("mrp").addEventListener("input", updateOff);
+
+// ---------- save ----------
+$("save").addEventListener("click", async () => {
+  if (busy) return;
+  setMsg("msg", "");
+  const name = $("name").value.trim();
+  const price = Number($("price").value), mrp = Number($("mrp").value);
+  if (name.length < 2) return setMsg("msg", "Please enter the product name.", "err");
+  if (!(price > 0)) return setMsg("msg", "Please enter the selling price.", "err");
+  if (!(mrp >= price)) return setMsg("msg", "MRP must be the same as, or higher than, the selling price.", "err");
+  if (!photos.length && !confirm("You haven't added any photos. Save without photos?")) return;
+
+  busy = true; $("save").disabled = true;
+  try {
+    const urls = [];
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+      if (!p.url) {
+        setMsg("msg", `Uploading photo ${i + 1} of ${photos.length}…`, "info");
+        const blob = await compress(p.file);
+        const out = await api("admin_upload", blob, { "Content-Type": "image/jpeg" });
+        p.url = out.url;
+      }
+      urls.push(p.url);
+    }
+    setMsg("msg", "Saving product…", "info");
+    const product = {
+      name, category: $("category").value, style: $("style").value.trim(),
+      price, mrp, details: $("details").value.trim(), images: urls,
+      badge: $("badge").value, bestseller: $("bestseller").checked, offer_label: $("offer").value.trim(),
+    };
+    const out = await api("admin_add", JSON.stringify({ product }), { "Content-Type": "application/json" });
+    $("doneText").textContent = `"${name}" was added with ${urls.length} photo${urls.length === 1 ? "" : "s"} (product number ${out.id}). It will appear on the website within a minute.`;
+    show("done");
+  } catch (e) {
+    setMsg("msg", friendly(e) + (photos.some(p => p.url) ? " (Photos that already uploaded won't be uploaded again — just tap Save once more.)" : ""), "err");
+  } finally {
+    busy = false; $("save").disabled = false;
+  }
+});
+
+$("again").addEventListener("click", () => {
+  photos.forEach(p => URL.revokeObjectURL(p.preview));
+  photos = []; renderThumbs();
+  ["name","style","price","mrp","details","offer"].forEach(id => { $(id).value = ""; });
+  $("badge").value = ""; $("bestseller").checked = false; $("category").selectedIndex = 0;
+  updateOff(); setMsg("msg", ""); show("app");
+  window.scrollTo(0, 0);
+});
+</script>
+</body>
+</html>
