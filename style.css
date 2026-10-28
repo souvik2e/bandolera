@@ -177,8 +177,9 @@ a{ color:inherit; }
 .collections{ padding: 44px 18px 10px; max-width:1200px; margin:0 auto; text-align:center; }
 .collections__title{ font-family: var(--font-d); font-weight:600; font-size: clamp(26px,5vw,38px); margin:0 0 26px; }
 .collections__grid{ display:grid; grid-template-columns:1fr; gap:14px; text-align:left; }
-@media(min-width:640px){ .collections__grid{ grid-template-columns: repeat(2,1fr); } }
-@media(min-width:900px){ .collections__grid{ grid-template-columns: repeat(4,1fr); } }
+@media(min-width:540px){ .collections__grid{ grid-template-columns: repeat(2,1fr); } }
+@media(min-width:760px){ .collections__grid{ grid-template-columns: repeat(3,1fr); } }
+@media(min-width:1060px){ .collections__grid{ grid-template-columns: repeat(5,1fr); } }
 
 .collection-card{
   position:relative; border:none; border-radius: var(--radius); overflow:hidden;
