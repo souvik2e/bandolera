@@ -1,5 +1,5 @@
 // BANDOLERA — Google Apps Script (products + paid orders)
-var ORDER_TOKEN = "PASTE_A_SECRET_WORD";   // must be the SAME word you put in the Worker
+var ORDER_TOKEN = "bdlr-secret-99";   // must be the SAME word you put in the Worker
 var PRODUCT_TAB = "bandolera-sheet-v2";    // the tab that holds your products
 var ORDERS_TAB  = "Orders";                // created automatically on the first order
 
