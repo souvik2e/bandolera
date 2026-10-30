@@ -602,3 +602,8 @@ a{ color:inherit; }
 .addr-actions{ display:flex; gap:10px; margin-top:12px; }
 .addr-cancel{ background:none; border:1px solid var(--line-strong); border-radius:26px; padding:14px 20px; font-weight:600; font-size:13px; color: var(--ink); }
 .addr-pay{ flex:1; background: var(--ink); color:#fff; border:none; border-radius:26px; padding:14px; font-weight:700; font-size:13.5px; text-transform:uppercase; letter-spacing:.04em; }
+
+/* ================= COLLECTION CARD ARTWORK ================= */
+.cc-art{ position:absolute; inset:0; width:100%; height:100%; z-index:0; display:block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.collection-card:hover .cc-art{ transform: scale(1.045); }
+.collection-card__soon, .collection-card__body{ z-index:2; }
