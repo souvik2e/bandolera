@@ -138,10 +138,12 @@ async function loadCatalog(){
     const products = rows.map(normalizeRow).filter(p => p.active && p.name && p.category);
     if(products.length === 0) throw new Error("sheet returned no active products");
     CATALOG = buildCatalogFromLive(products);
+    window.CATALOG = CATALOG;
   } catch(err){
     // Sheet not connected yet, or the request failed — show the demo catalog
     // instead of a broken page. Once the Apps Script URL is pasted in, this stops firing.
     CATALOG = normalizeDemoCatalog();
+    window.CATALOG = CATALOG;
   }
 }
 
@@ -203,6 +205,9 @@ const CS_COPY = {
   hoodie: "Heavyweight comfort, cut right — dropping soon.",
   sweatshirt: "Layer-ready essentials, dropping soon.",
 };
+
+// expose for category.html
+window.productCardPublic = productCard;
 
 function comingSoonPanel(key, label){
   const icon = GARMENT_ICONS[key] || GARMENT_ICONS.hoodie;
