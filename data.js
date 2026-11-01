@@ -55,3 +55,36 @@ const TABS = [
   { key:"hoodie",     label:"Hoodies",     note:"Soon" },
   { key:"sweatshirt", label:"Sweatshirts", note:"Soon" },
 ];
+
+// ==========================================================================
+// DEFAULT SIZE CHARTS (garment measurements in inches).
+// These are standard STARTER numbers — measure your own garments and edit them here,
+// or upload your own size-chart photo for a product in the admin page (that photo wins).
+// ==========================================================================
+const SIZE_CHARTS = {
+  tshirt: {
+    note: "Garment measurements in inches (±0.5″). Lay a tee you already own flat and compare.",
+    cols: ["Chest", "Length", "Shoulder"],
+    rows: { XS:[36,25.5,16], S:[38,26.5,17], M:[40,27.5,18], L:[42,28.5,19], XL:[44,29.5,20], XXL:[46,30.5,21], "3XL":[48,31.5,22] }
+  },
+  oversized: {
+    note: "Oversized fit — garment measurements in inches (±0.5″). Pick your usual size for the intended baggy look.",
+    cols: ["Chest", "Length", "Drop shoulder"],
+    rows: { XS:[42,26,19], S:[44,27,20], M:[46,28,21], L:[48,29,22], XL:[50,30,23], XXL:[52,31,24], "3XL":[54,32,25] }
+  },
+  polo: {
+    note: "Garment measurements in inches (±0.5″).",
+    cols: ["Chest", "Length", "Sleeve"],
+    rows: { XS:[37,25.5,8], S:[39,26.5,8.5], M:[41,27.5,9], L:[43,28.5,9.5], XL:[45,29.5,10], XXL:[47,30.5,10.5], "3XL":[49,31.5,11] }
+  },
+  hoodie: {
+    note: "Garment measurements in inches (±0.5″). Relaxed fit.",
+    cols: ["Chest", "Length", "Sleeve"],
+    rows: { XS:[40,25,24], S:[42,26,24.5], M:[44,27,25], L:[46,28,25.5], XL:[48,29,26], XXL:[50,30,26.5], "3XL":[52,31,27] }
+  },
+  sweatshirt: {
+    note: "Garment measurements in inches (±0.5″). Relaxed fit.",
+    cols: ["Chest", "Length", "Sleeve"],
+    rows: { XS:[40,24.5,24], S:[42,25.5,24.5], M:[44,26.5,25], L:[46,27.5,25.5], XL:[48,28.5,26], XXL:[50,29.5,26.5], "3XL":[52,30.5,27] }
+  },
+};
