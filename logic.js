@@ -11,6 +11,56 @@ let activeTab = "tshirt";
 let CATALOG = {};
 const notifiedEmails = [];
 
+// ---- sizes, stock and the saved bag -----------------------------------
+const SIZE_ORDER = ["XS","S","M","L","XL","XXL","3XL"];
+const CART_KEY = "bdlr_cart";
+const lineKey = (id, size) => `${id}|${size || ""}`;
+
+function parseSizes(raw){
+  const str = String(raw == null ? "" : raw).trim();
+  if(!str) return null;
+  const map = {};
+  str.split("|").forEach(part => {
+    const [k, v] = part.split(":");
+    const key = String(k || "").trim().toUpperCase();
+    if(key) map[key] = Math.max(0, parseInt(v, 10) || 0);
+  });
+  const keys = Object.keys(map).sort((a,b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
+  if(!keys.length) return null;
+  const ordered = {};
+  keys.forEach(k => ordered[k] = map[k]);
+  return ordered;
+}
+function isSoldOut(item){
+  if(!item) return false;
+  if(item.soldout) return true;
+  return !!(item.sizes && Object.values(item.sizes).every(n => n <= 0));
+}
+const stockFor = (item, size) => item.sizes ? (item.sizes[size] || 0) : 10;
+
+function saveCart(){
+  try{ localStorage.setItem(CART_KEY, JSON.stringify(cart.map(c => ({ id:c.id, size:c.size || "", qty:c.qty })))); }catch(e){}
+}
+// rebuilds the bag from what was saved, using today's catalog (drops anything sold out or deleted)
+function loadSavedCart(){
+  let saved = [];
+  try{ saved = JSON.parse(localStorage.getItem(CART_KEY) || "[]"); }catch(e){}
+  cart = [];
+  (Array.isArray(saved) ? saved : []).forEach(sv => {
+    const item = findItem(String(sv.id));
+    if(!item || isSoldOut(item)) return;
+    const size = item.sizes ? String(sv.size || "").toUpperCase() : "";
+    if(item.sizes && !Object.prototype.hasOwnProperty.call(item.sizes, size)) return;
+    const max = Math.min(stockFor(item, size), 10);
+    const qty = Math.min(Number(sv.qty) || 0, max);
+    if(qty < 1) return;
+    const existing = cart.find(c => lineKey(c.id, c.size) === lineKey(item.id, size));
+    if(existing) existing.qty = Math.min(existing.qty + qty, max);
+    else cart.push({ ...item, size, qty });
+  });
+  saveCart();
+}
+
 const money = n => "₹" + n.toLocaleString("en-IN");
 
 // ---- palette for admin-added products that don't have an image yet -------
@@ -86,6 +136,9 @@ function buildCatalogFromLive(products){
       bestseller:  p.bestseller  || false,
       offer_label: p.offer_label || null,
       promo_codes: p.promo_codes || [],
+      sizes: p.sizes || null,
+      soldout: !!p.soldout,
+      size_chart: p.size_chart || "",
     });
   });
   Object.keys(cats).forEach(k => {
@@ -126,6 +179,9 @@ function normalizeRow(obj, idx){
     bestseller:  /^(true|yes|1)$/i.test(String(obj.bestseller || "").trim()),
     offer_label: obj.offer_label || null,
     promo_codes: promoCodes,
+    sizes:       parseSizes(obj.sizes),
+    soldout:     /^(true|yes|1)$/i.test(String(obj.soldout || "").trim()),
+    size_chart:  String(obj.size_chart || "").trim(),
   };
 }
 
@@ -149,6 +205,7 @@ async function loadCatalog(){
 
 // ---- catalog rendering ----------------------------------------------------
 function productCard(item){
+  const sold = isSoldOut(item);
   const off = Math.round(100 - (item.price/item.mrp)*100);
   const media = item.image_url
     ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">`
@@ -161,6 +218,7 @@ function productCard(item){
         ${item.tag ? `<span class="card__tag">${item.tag}</span>` : ""}
         ${item.badge ? `<span class="card__badge">${item.badge}</span>` : ""}
         ${item.bestseller ? `<span class="card__ribbon">★ Bestseller</span>` : ""}
+        ${sold ? `<span class="card__soldout">Sold out</span>` : ""}
       </div>
       <div class="card__body">
         <h3 class="card__name">${item.name}</h3>
@@ -174,10 +232,14 @@ function productCard(item){
       </div>
       </a>
       <div class="card__foot">
-        <button class="btn-add" data-id="${item.id}">
+        ${sold
+          ? `<button class="btn-add" disabled><span class="btn-add__label">Sold out</span></button>`
+          : item.sizes
+            ? `<a class="btn-select" href="product.html?id=${encodeURIComponent(item.id)}">Select size</a>`
+            : `<button class="btn-add" data-id="${item.id}">
           <span class="btn-add__label">Add to Bag</span>
           <span class="btn-add__check">Added ✓</span>
-        </button>
+        </button>`}
       </div>
     </article>`;
 }
@@ -262,23 +324,39 @@ function renderTabs(){
 }
 
 // ---- cart -------------------------------------------------------------
-function addToCart(id, sourceEl){
+function addToCart(id, sourceEl, size){
   const item = findItem(id);
-  if(!item) return;
-  const existing = cart.find(c=>c.id===id);
-  if(existing) existing.qty++;
-  else cart.push({...item, qty:1});
+  if(!item) return false;
+  if(isSoldOut(item)){ toast("Sorry — this item is sold out"); return false; }
+  size = item.sizes ? String(size || "").toUpperCase() : "";
+  if(item.sizes && !size){ toast("Please select a size first 👆"); return false; }
+  if(item.sizes && !Object.prototype.hasOwnProperty.call(item.sizes, size)){ toast("That size isn't available"); return false; }
+  const max = Math.min(stockFor(item, size), 10);
+  if(max < 1){ toast(`Size ${size} is sold out`); return false; }
+  const key = lineKey(item.id, size);
+  const existing = cart.find(c => lineKey(c.id, c.size) === key);
+  if(existing){
+    if(existing.qty >= max){ toast(`Only ${max} available${size ? " in " + size : ""}`); return false; }
+    existing.qty++;
+  } else {
+    cart.push({ ...item, size, qty:1 });
+  }
+  saveCart();
   renderCart();
   flyToCart(sourceEl);
   bumpCartIcon();
-  toast(`${item.name} added to bag 🔥`);
+  toast(`${item.name}${size ? " (" + size + ")" : ""} added to bag 🔥`);
+  return true;
 }
 
-function changeQty(id, delta){
-  const line = cart.find(c=>c.id===id);
+function changeQty(key, delta){
+  const line = cart.find(c => lineKey(c.id, c.size) === key);
   if(!line) return;
+  const max = Math.min(stockFor(line, line.size), 10);
+  if(delta > 0 && line.qty >= max){ toast(`Only ${max} available`); return; }
   line.qty += delta;
-  if(line.qty <= 0) cart = cart.filter(c=>c.id!==id);
+  if(line.qty <= 0) cart = cart.filter(c => lineKey(c.id, c.size) !== key);
+  saveCart();
   renderCart();
 }
 
@@ -304,12 +382,13 @@ function renderCart(){
         <div class="cart-line__art">${c.image_url ? `<img src="${c.image_url}" alt="">` : artSVG(c.art)}</div>
         <div class="cart-line__info">
           <p class="cart-line__name">${c.name}</p>
+          ${c.size ? `<p class="cart-line__size">Size: ${c.size}</p>` : ""}
           <p class="cart-line__price">${money(c.price)}</p>
         </div>
         <div class="qty">
-          <button data-id="${c.id}" data-delta="-1">−</button>
+          <button data-key="${lineKey(c.id, c.size)}" data-delta="-1">−</button>
           <span>${c.qty}</span>
-          <button data-id="${c.id}" data-delta="1">+</button>
+          <button data-key="${lineKey(c.id, c.size)}" data-delta="1">+</button>
         </div>
       </div>`).join("");
   }
@@ -439,6 +518,22 @@ function renderProductDetail(){
     ? `<div class="pd-thumbs">${images.map((src,i)=>`<button class="pd-thumb ${i===0?"is-active":""}" data-idx="${i}"><img src="${src}" alt=""></button>`).join("")}</div>`
     : "";
   const similar = getSimilarProducts(item);
+  const sold = isSoldOut(item);
+  const sizeKeys = item.sizes ? Object.keys(item.sizes) : [];
+  const sizeBlock = (item.sizes && !sold) ? `
+        <div class="pd-sizes">
+          <div class="pd-sizes__head"><span>Select size</span><button type="button" class="pd-sizeguide" id="pdSizeGuide">Size guide</button></div>
+          <div class="pd-sizes__row" id="pdSizes">
+            ${sizeKeys.map(sz => `<button type="button" class="pd-size${item.sizes[sz] <= 0 ? " is-out" : ""}" data-size="${sz}"${item.sizes[sz] <= 0 ? " disabled" : ""}>${sz}</button>`).join("")}
+          </div>
+          <p class="pd-sizes__note" id="pdSizeNote"></p>
+        </div>` : "";
+  const addBlock = sold
+    ? `<button class="btn-add pd-add" disabled><span class="btn-add__label">Sold out</span></button>`
+    : `<button class="btn-add pd-add" data-id="${item.id}">
+          <span class="btn-add__label">Add to Bag</span>
+          <span class="btn-add__check">Added ✓</span>
+        </button>`;
 
   host.innerHTML = `
     <div class="pd-grid">
@@ -451,6 +546,7 @@ function renderProductDetail(){
         <div class="pd-badges">
           ${item.badge ? `<span class="card__badge pd-badge">${item.badge}</span>` : ""}
           ${item.bestseller ? `<span class="pd-best-tag">★ Bestseller</span>` : ""}
+          ${sold ? `<span class="pd-soldout">Sold out</span>` : ""}
         </div>
         <h1>${item.name}</h1>
         <div class="pd-price">
@@ -471,10 +567,8 @@ function renderProductDetail(){
           </div>
           <p class="pd-promos__note">Tap any code to copy — apply at checkout</p>
         </div>` : ""}
-        <button class="btn-add pd-add" data-id="${item.id}">
-          <span class="btn-add__label">Add to Bag</span>
-          <span class="btn-add__check">Added ✓</span>
-        </button>
+        ${sizeBlock}
+        ${addBlock}
       </div>
     </div>
     ${similar.length ? `
@@ -492,7 +586,24 @@ function renderProductDetail(){
     });
   });
 
-  host.querySelector(".pd-add")?.addEventListener("click", e=> addToCart(item.id, e.currentTarget));
+  let selectedSize = "";
+  host.querySelectorAll(".pd-size:not([disabled])").forEach(b => b.addEventListener("click", () => {
+    selectedSize = b.dataset.size;
+    host.querySelectorAll(".pd-size").forEach(x => x.classList.toggle("is-on", x === b));
+    const left = item.sizes[selectedSize];
+    const note = document.getElementById("pdSizeNote");
+    if(note) note.textContent = left <= 3 ? `Only ${left} left in ${selectedSize}` : "";
+  }));
+  document.getElementById("pdSizeGuide")?.addEventListener("click", () => openSizeGuide(item));
+  host.querySelector(".pd-add:not([disabled])")?.addEventListener("click", e => {
+    if(item.sizes && !selectedSize){
+      const row = document.getElementById("pdSizes");
+      row?.classList.add("shake"); setTimeout(() => row?.classList.remove("shake"), 500);
+      toast("Please select a size first 👆");
+      return;
+    }
+    addToCart(item.id, e.currentTarget, selectedSize);
+  });
   host.querySelectorAll(".btn-add[data-id]").forEach(btn=>{
     if(btn.classList.contains("pd-add")) return; // already wired above
     btn.addEventListener("click", ()=> addToCart(btn.dataset.id, btn));
@@ -601,7 +712,7 @@ async function startCheckout(){
   btn.disabled = true;
   btn.textContent = "Processing…";
   try{
-    const items = cart.map(c => ({ id: String(c.id), qty: c.qty }));
+    const items = cart.map(c => ({ id: String(c.id), size: c.size || "", qty: c.qty }));
     const res = await fetch(`${PAYMENT_API}?action=create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -633,6 +744,7 @@ async function startCheckout(){
           const v = await vr.json();
           if(v.ok){
             cart = [];
+            saveCart();
             renderCart();
             toggleCart(false);
             window.location.href = `order-success.html?payment_id=${encodeURIComponent(response.razorpay_payment_id)}`;
@@ -652,6 +764,36 @@ async function startCheckout(){
   }
 }
 
+// ---- size guide ---------------------------------------------------------
+function openSizeGuide(item){
+  const chart = (typeof SIZE_CHARTS !== "undefined") ? SIZE_CHARTS[item.cat] : null;
+  const offered = item.sizes ? Object.keys(item.sizes) : null;
+  let body = "";
+  if(item.size_chart){
+    body = `<img class="sg-img" src="${item.size_chart}" alt="Size chart for ${item.name}">`;
+  } else if(chart){
+    const sizes = Object.keys(chart.rows).filter(sz => !offered || offered.includes(sz));
+    body = `<div class="sg-table-wrap"><table class="sg-table"><thead><tr><th>Size</th>${chart.cols.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${sizes.map(sz => `<tr><td>${sz}</td>${chart.rows[sz].map(v => `<td>${v}″</td>`).join("")}</tr>`).join("")}</tbody></table></div><p class="sg-note">${chart.note}</p>`;
+  } else { toast("Size guide coming soon"); return; }
+
+  const wrap = document.createElement("div");
+  wrap.className = "addr-modal";
+  wrap.innerHTML = `
+    <div class="addr-card" role="dialog" aria-modal="true" aria-label="Size guide">
+      <h3>Size guide</h3>
+      <p class="addr-sub">${item.name}</p>
+      ${body}
+      <div class="addr-actions"><button type="button" class="addr-pay sg-close">Got it</button></div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const onKey = e => { if(e.key === "Escape") close(); };
+  function close(){ document.removeEventListener("keydown", onKey); wrap.classList.remove("is-open"); setTimeout(() => wrap.remove(), 200); }
+  document.addEventListener("keydown", onKey);
+  wrap.addEventListener("click", e => { if(e.target === wrap) close(); });
+  wrap.querySelector(".sg-close").addEventListener("click", close);
+  requestAnimationFrame(() => wrap.classList.add("is-open"));
+}
+
 // ---- shared UI: cart, bottom nav, header — needed on every page -----------
 function wireCommonUI(){
   const onShopPage = !!document.getElementById("shop");
@@ -663,7 +805,7 @@ function wireCommonUI(){
   document.getElementById("cartBody").addEventListener("click", e=>{
     const btn = e.target.closest("button[data-delta]");
     if(!btn) return;
-    changeQty(btn.dataset.id, Number(btn.dataset.delta));
+    changeQty(btn.dataset.key, Number(btn.dataset.delta));
   });
 
   document.getElementById("cartIcon").addEventListener("click", ()=>toggleCart(true));
@@ -735,6 +877,7 @@ function wireHomeUI(){
 // ---- wire up --------------------------------------------------------------
 async function init(){
   await loadCatalog();
+  loadSavedCart();
   renderCart();
   wireCommonUI();
 
