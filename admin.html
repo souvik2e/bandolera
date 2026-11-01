@@ -4,19 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Bandolera — Add Product</title>
+<title>Bandolera — Admin</title>
 <style>
 :root{ --bg:#F6F1E7; --ink:#18140F; --dim:#756C5F; --line:#D9D2C3; --crimson:#C81E3A; --teal:#0E7C74; }
 *{ box-sizing:border-box; }
 body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-.wrap{ max-width:640px; margin:0 auto; padding:18px 16px 70px; }
+.wrap{ max-width:640px; margin:0 auto; padding:18px 16px 80px; }
 .top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .brand{ font-weight:800; letter-spacing:.06em; }
 .link{ background:none; border:none; color:var(--dim); font-size:13px; font-weight:600; text-decoration:underline; padding:6px; }
 .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; }
 h1{ font-size:21px; margin:0 0 4px; }
 .sub{ color:var(--dim); font-size:13.5px; margin:0 0 6px; line-height:1.5; }
-.f{ display:block; margin-top:14px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--dim); }
+.hint{ color:var(--dim); font-size:12.5px; margin:6px 0 0; line-height:1.5; }
+.f{ display:block; margin-top:16px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--dim); }
+.opt{ text-transform:none; font-weight:500; }
 input,select,textarea{ width:100%; margin-top:6px; padding:13px; border:1px solid var(--line); border-radius:10px; font-size:16px; font-family:inherit; background:#FBF9F4; color:var(--ink); }
 textarea{ min-height:96px; resize:vertical; }
 input:focus,select:focus,textarea:focus{ outline:2px solid var(--teal); outline-offset:1px; }
@@ -25,8 +27,13 @@ button{ font-family:inherit; cursor:pointer; }
 .btn{ width:100%; margin-top:18px; padding:16px; border:none; border-radius:28px; background:var(--ink); color:#fff; font-weight:700; font-size:14px; letter-spacing:.05em; text-transform:uppercase; }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
 .btn.ghost{ background:none; color:var(--ink); border:1px solid var(--line); margin-top:10px; text-decoration:none; display:block; text-align:center; }
-.drop{ display:block; border:2px dashed var(--line); border-radius:14px; text-align:center; padding:24px 10px; font-weight:700; color:var(--ink); cursor:pointer; background:#FBF9F4; }
+.btn.danger{ background:none; color:var(--crimson); border:1.5px solid var(--crimson); margin-top:12px; }
+.modes{ display:flex; gap:8px; margin:14px 0 2px; }
+.mode{ flex:1; padding:12px 8px; border:1px solid var(--line); border-radius:12px; background:#FBF9F4; color:var(--ink); font-weight:700; font-size:13px; }
+.mode.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+.drop{ display:block; border:2px dashed var(--line); border-radius:14px; text-align:center; padding:22px 10px; font-weight:700; color:var(--ink); cursor:pointer; background:#FBF9F4; margin-top:6px; }
 .drop small{ display:block; font-weight:500; color:var(--dim); margin-top:4px; }
+.drop.slim{ padding:14px 10px; }
 .drop input{ display:none; }
 .thumbs{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
 .thumb{ position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); aspect-ratio:1/1; background:#eee; }
@@ -38,9 +45,17 @@ button{ font-family:inherit; cursor:pointer; }
 .off{ font-size:13px; color:var(--teal); font-weight:700; margin-top:8px; min-height:16px; }
 .check{ display:flex; gap:10px; align-items:center; margin-top:16px; font-size:14.5px; font-weight:600; }
 .check input{ width:20px; height:20px; margin:0; }
+.sizes{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }
+.sz{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+.sz span{ font-weight:800; font-size:13px; }
+.sz input{ margin:0; padding:11px 4px; text-align:center; }
+.chartbox{ display:flex; align-items:center; gap:12px; margin-top:10px; }
+.chartbox img{ width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line); }
+.chartbox .link{ color:var(--crimson); }
 .msg{ margin-top:14px; font-size:14px; font-weight:600; min-height:20px; line-height:1.45; }
 .msg.err{ color:var(--crimson); }
 .msg.info{ color:var(--teal); }
+.pid{ font-size:12px; color:var(--dim); margin-top:10px; }
 .ok-icon{ width:56px; height:56px; border-radius:50%; background:#EAF7EF; color:#1C8A55; display:flex; align-items:center; justify-content:center; font-size:28px; margin:4px auto 12px; }
 .center{ text-align:center; }
 [hidden]{ display:none !important; }
@@ -57,7 +72,7 @@ button{ font-family:inherit; cursor:pointer; }
   <!-- ===== LOGIN ===== -->
   <section class="card" id="login">
     <h1>Welcome back</h1>
-    <p class="sub">Enter your admin password to add products.</p>
+    <p class="sub">Enter your admin password to manage products.</p>
     <form id="loginForm">
       <label class="f" for="pw">Password</label>
       <input id="pw" type="password" autocomplete="current-password" required>
@@ -66,71 +81,99 @@ button{ font-family:inherit; cursor:pointer; }
     </form>
   </section>
 
-  <!-- ===== ADD PRODUCT ===== -->
+  <!-- ===== ADD / EDIT ===== -->
   <section class="card" id="app" hidden>
-    <h1>Add a product</h1>
-    <p class="sub">Pick the photos, fill in the details, tap Save. It goes live on the website within a minute.</p>
-
-    <label class="f">Photos</label>
-    <label class="drop" for="files">📷 Tap to choose photos<small>You can pick several at once. The first one is the main photo.</small></label>
-    <input id="files" type="file" accept="image/*" multiple>
-    <div class="thumbs" id="thumbs"></div>
-    <div class="count" id="photoCount">No photos yet</div>
-
-    <label class="f" for="name">Product name</label>
-    <input id="name" placeholder="e.g. Black Oversized Tee" maxlength="100" autocomplete="off">
-
-    <label class="f" for="category">Category</label>
-    <select id="category"></select>
-
-    <label class="f" for="style">Style / fit <span style="text-transform:none;font-weight:500">(optional)</span></label>
-    <input id="style" placeholder="e.g. Crew neck, Drop shoulder" maxlength="60" autocomplete="off">
-
-    <div class="row">
-      <div>
-        <label class="f" for="price">Selling price (₹)</label>
-        <input id="price" type="number" inputmode="decimal" min="1" placeholder="899">
-      </div>
-      <div>
-        <label class="f" for="mrp">MRP (₹)</label>
-        <input id="mrp" type="number" inputmode="decimal" min="1" placeholder="1799">
-      </div>
-    </div>
-    <div class="off" id="offText"></div>
-
-    <label class="f" for="details">Details <span style="text-transform:none;font-weight:500">(fabric, fit, care)</span></label>
-    <textarea id="details" maxlength="600" placeholder="e.g. 240 GSM cotton, drop shoulder, machine washable"></textarea>
-
-    <div class="row">
-      <div>
-        <label class="f" for="badge">Badge</label>
-        <select id="badge">
-          <option value="">None</option>
-          <option>New</option>
-          <option>Bestseller</option>
-          <option>Low Stock</option>
-        </select>
-      </div>
-      <div>
-        <label class="f" for="offer">Offer tag <span style="text-transform:none;font-weight:500">(optional)</span></label>
-        <input id="offer" placeholder="e.g. 50% OFF Today" maxlength="40" autocomplete="off">
-      </div>
+    <h1 id="appTitle">Add a product</h1>
+    <p class="sub" id="appSub">Pick the photos, fill in the details, tap Save. It goes live on the website within a minute.</p>
+    <div class="modes">
+      <button type="button" class="mode on" id="modeNew">Add new product</button>
+      <button type="button" class="mode" id="modeEdit">Edit products</button>
     </div>
 
-    <label class="check"><input type="checkbox" id="bestseller"> Show the ★ Bestseller ribbon</label>
+    <div id="pickBox" hidden>
+      <label class="f" for="pickProduct">Choose a product to edit</label>
+      <select id="pickProduct"><option value="">Loading…</option></select>
+    </div>
 
-    <button class="btn" id="save" type="button">Save product</button>
-    <p class="msg" id="msg"></p>
+    <div id="formBox">
+      <div class="pid" id="pid" hidden></div>
+
+      <label class="f">Photos</label>
+      <label class="drop" for="files">📷 Tap to add photos<small>You can pick several at once. The first one is the main photo.</small></label>
+      <input id="files" type="file" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="count" id="photoCount">No photos yet</div>
+
+      <label class="f" for="name">Product name</label>
+      <input id="name" placeholder="e.g. Black Oversized Tee" maxlength="100" autocomplete="off">
+
+      <label class="f" for="category">Category</label>
+      <select id="category"></select>
+
+      <label class="f" for="style">Style / fit <span class="opt">(optional)</span></label>
+      <input id="style" placeholder="e.g. Crew neck, Drop shoulder" maxlength="60" autocomplete="off">
+
+      <div class="row">
+        <div>
+          <label class="f" for="price">Selling price (₹)</label>
+          <input id="price" type="number" inputmode="decimal" min="1" placeholder="899">
+        </div>
+        <div>
+          <label class="f" for="mrp">MRP (₹)</label>
+          <input id="mrp" type="number" inputmode="decimal" min="1" placeholder="1799">
+        </div>
+      </div>
+      <div class="off" id="offText"></div>
+
+      <label class="f" for="details">Details <span class="opt">(fabric, fit, care)</span></label>
+      <textarea id="details" maxlength="600" placeholder="e.g. 240 GSM cotton, drop shoulder, machine washable"></textarea>
+
+      <div class="row">
+        <div>
+          <label class="f" for="badge">Badge</label>
+          <select id="badge">
+            <option value="">None</option>
+            <option>New</option>
+            <option>Bestseller</option>
+            <option>Low Stock</option>
+          </select>
+        </div>
+        <div>
+          <label class="f" for="offer">Offer tag <span class="opt">(optional)</span></label>
+          <input id="offer" placeholder="e.g. 50% OFF Today" maxlength="40" autocomplete="off">
+        </div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="bestseller"> Show the ★ Bestseller ribbon</label>
+
+      <label class="f">Sizes &amp; stock</label>
+      <p class="hint">Type how many pieces you have in each size. Leave a box empty if you don't make that size. <b>0</b> = sold out. Customers can only pick sizes that have stock, and the number goes down by itself every time someone buys. Leave everything empty for products without sizes.</p>
+      <div class="sizes" id="sizes"></div>
+
+      <label class="f">Size chart <span class="opt">(optional)</span></label>
+      <p class="hint">If you skip this, customers see a standard chart for the category. Add a photo of your own chart to replace it.</p>
+      <label class="drop slim" for="chartFile">📏 Choose size-chart photo</label>
+      <input id="chartFile" type="file" accept="image/*" hidden>
+      <div class="chartbox" id="chartBox" hidden></div>
+
+      <div id="editOnly" hidden>
+        <label class="check"><input type="checkbox" id="fActive"> Show this product on the website</label>
+        <label class="check"><input type="checkbox" id="fSold"> Mark the whole product as SOLD OUT</label>
+      </div>
+
+      <button class="btn" id="save" type="button">Save product</button>
+      <button class="btn danger" id="del" type="button" hidden>Delete this product</button>
+      <p class="msg" id="msg"></p>
+    </div>
   </section>
 
   <!-- ===== DONE ===== -->
   <section class="card center" id="done" hidden>
     <div class="ok-icon">✓</div>
-    <h1>Product added</h1>
+    <h1 id="doneTitle">Done</h1>
     <p class="sub" id="doneText"></p>
-    <button class="btn" id="again" type="button">Add another product</button>
+    <button class="btn" id="again" type="button">Continue</button>
     <a class="btn ghost" href="index.html" target="_blank" rel="noopener">Open the website</a>
-    <p class="sub" style="margin-top:14px">To change a price, hide a product or fix a typo later, edit it in your Google Sheet.</p>
   </section>
 
 </div>
@@ -140,26 +183,31 @@ button{ font-family:inherit; cursor:pointer; }
 const WORKER = "https://bandolera-shop.byme.workers.dev/";
 
 const CATS = [["tshirt","T-Shirts"],["oversized","Oversized"],["polo","Polo"],["hoodie","Hoodies"],["sweatshirt","Sweatshirts"]];
+const SIZES = ["XS","S","M","L","XL","XXL","3XL"];
 const $ = (id) => document.getElementById(id);
+const JSON_H = { "Content-Type": "application/json" };
+
 let pw = sessionStorage.getItem("bdlr_admin_pw") || "";
-let photos = [];            // { file, preview, url }
+let mode = "new";            // "new" or "edit"
+let photos = [];             // { file, preview, url }
+let chart = null;            // { file, preview, url } or null
+let PRODUCTS = [];
+let editing = null;
 let busy = false;
 
 $("category").innerHTML = CATS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+$("sizes").innerHTML = SIZES.map(s => `<label class="sz"><span>${s}</span><input type="number" inputmode="numeric" min="0" step="1" data-size="${s}" placeholder="—"></label>`).join("");
 
 function show(name){
   ["login","app","done"].forEach(n => { $(n).hidden = (n !== name); });
   $("logout").hidden = (name === "login");
 }
-function setMsg(id, text, kind){
-  const el = $(id); el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : "");
-}
+function setMsg(id, text, kind){ const el = $(id); el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
 function friendly(e){
   const m = String(e && e.message || e);
   if (/failed to fetch|networkerror|load failed/i.test(m)) return "Can't reach the server. Check your internet connection.";
   return m;
 }
-
 async function api(action, body, headers){
   const res = await fetch(`${WORKER}?action=${action}`, {
     method: "POST",
@@ -223,7 +271,7 @@ function renderThumbs(){
     x.dataset.act = "del"; x.dataset.i = i; x.setAttribute("aria-label", "Remove photo"); d.appendChild(x);
     box.appendChild(d);
   });
-  $("photoCount").textContent = photos.length ? `${photos.length} photo${photos.length > 1 ? "s" : ""} selected` : "No photos yet";
+  $("photoCount").textContent = photos.length ? `${photos.length} photo${photos.length > 1 ? "s" : ""}` : "No photos yet";
 }
 $("thumbs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-act]"); if (!b || busy) return;
@@ -233,7 +281,45 @@ $("thumbs").addEventListener("click", (e) => {
   renderThumbs();
 });
 
-// shrink each photo before uploading (phone photos are huge)
+// ---------- size chart photo ----------
+$("chartFile").addEventListener("change", (e) => {
+  const f = (e.target.files || [])[0];
+  e.target.value = "";
+  if (!f) return;
+  chart = { file: f, preview: URL.createObjectURL(f), url: null };
+  renderChart();
+});
+function renderChart(){
+  const box = $("chartBox");
+  if (!chart) { box.hidden = true; box.textContent = ""; return; }
+  box.hidden = false; box.textContent = "";
+  const im = document.createElement("img"); im.src = chart.preview; im.alt = "Size chart";
+  const rm = document.createElement("button"); rm.type = "button"; rm.className = "link"; rm.id = "chartRemove"; rm.textContent = "Remove (use the standard chart)";
+  rm.addEventListener("click", () => { if (!busy) { chart = null; renderChart(); } });
+  box.appendChild(im); box.appendChild(rm);
+}
+
+// ---------- sizes ----------
+function readSizes(){
+  const out = {};
+  for (const inp of $("sizes").querySelectorAll("input")) {
+    const v = inp.value.trim();
+    if (v === "") continue;
+    if (!/^\d+$/.test(v)) return { error: `Stock for size ${inp.dataset.size} must be a whole number (0 or more).` };
+    out[inp.dataset.size] = Number(v);
+  }
+  return { value: out };
+}
+function fillSizes(str){
+  $("sizes").querySelectorAll("input").forEach(i => { i.value = ""; });
+  String(str || "").split("|").forEach(part => {
+    const [k, v] = part.split(":");
+    const inp = $("sizes").querySelector(`input[data-size="${String(k || "").trim().toUpperCase()}"]`);
+    if (inp) inp.value = String(parseInt(v, 10) || 0);
+  });
+}
+
+// ---------- shrink photos before upload ----------
 async function decode(file){
   if (window.createImageBitmap) { try { return await createImageBitmap(file); } catch (e) {} }
   return await new Promise((res, rej) => {
@@ -262,6 +348,19 @@ async function compress(file){
   if (blob.size > 1900000) throw new Error("A photo is too large even after shrinking. Please choose a smaller one.");
   return blob;
 }
+async function uploadOne(item, label){
+  if (item.url) return item.url;
+  setMsg("msg", label, "info");
+  const out = await api("admin_upload", await compress(item.file), { "Content-Type": "image/jpeg" });
+  item.url = out.url;
+  return item.url;
+}
+async function uploadPhotos(){
+  const urls = [];
+  for (let i = 0; i < photos.length; i++) urls.push(await uploadOne(photos[i], `Uploading photo ${i + 1} of ${photos.length}…`));
+  return urls;
+}
+const retryNote = () => (photos.some(p => p.url) || (chart && chart.url)) ? " (Photos that already uploaded won't be uploaded again — just tap the button once more.)" : "";
 
 // ---------- discount preview ----------
 function updateOff(){
@@ -271,7 +370,82 @@ function updateOff(){
 $("price").addEventListener("input", updateOff);
 $("mrp").addEventListener("input", updateOff);
 
+// ---------- form helpers ----------
+function resetForm(){
+  photos.forEach(p => { if (p.file) URL.revokeObjectURL(p.preview); });
+  photos = []; chart = null; editing = null;
+  ["name","style","price","mrp","details","offer"].forEach(id => { $(id).value = ""; });
+  $("badge").value = ""; $("bestseller").checked = false; $("category").selectedIndex = 0;
+  $("fActive").checked = true; $("fSold").checked = false;
+  fillSizes(""); renderThumbs(); renderChart(); updateOff(); setMsg("msg", "");
+  $("pid").hidden = true;
+}
+function fillForm(p){
+  resetForm();
+  editing = p;
+  $("name").value = p.name; $("category").value = CATS.some(c => c[0] === p.category) ? p.category : "tshirt";
+  $("style").value = p.style; $("price").value = p.price || ""; $("mrp").value = p.mrp || "";
+  $("details").value = p.details; $("offer").value = p.offer_label;
+  $("badge").value = ["New","Bestseller","Low Stock"].includes(p.badge) ? p.badge : "";
+  $("bestseller").checked = !!p.bestseller;
+  $("fActive").checked = !!p.active; $("fSold").checked = !!p.soldout;
+  fillSizes(p.sizes);
+  photos = p.images.map(u => ({ file: null, preview: u, url: u }));
+  chart = p.size_chart ? { file: null, preview: p.size_chart, url: p.size_chart } : null;
+  $("pid").textContent = `Product number ${p.id}`; $("pid").hidden = false;
+  renderThumbs(); renderChart(); updateOff();
+}
+
+// ---------- mode: add / edit ----------
+function setMode(m){
+  mode = m;
+  $("modeNew").classList.toggle("on", m === "new");
+  $("modeEdit").classList.toggle("on", m === "edit");
+  $("pickBox").hidden = (m !== "edit");
+  $("editOnly").hidden = (m !== "edit");
+  $("del").hidden = (m !== "edit");
+  $("appTitle").textContent = (m === "new") ? "Add a product" : "Edit products";
+  $("appSub").textContent = (m === "new")
+    ? "Pick the photos, fill in the details, tap Save. It goes live on the website within a minute."
+    : "Choose a product, change anything, then tap Save changes. You can also hide it, mark it sold out, or delete it.";
+  $("save").textContent = (m === "new") ? "Save product" : "Save changes";
+  resetForm();
+  $("formBox").hidden = (m === "edit");
+  if (m === "edit") loadProducts();
+}
+async function loadProducts(){
+  const sel = $("pickProduct");
+  sel.innerHTML = '<option value="">Loading products…</option>';
+  try {
+    const out = await api("admin_list");
+    PRODUCTS = out.products.slice().reverse();     // newest first
+    sel.innerHTML = '<option value="">— choose a product —</option>';
+    PRODUCTS.forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      const cat = (CATS.find(c => c[0] === p.category) || [0, p.category])[1];
+      o.textContent = `${p.name} — ${cat}` + (p.active ? "" : " (hidden)") + (p.soldout ? " (sold out)" : "");
+      sel.appendChild(o);
+    });
+    if (!PRODUCTS.length) sel.innerHTML = '<option value="">No products yet</option>';
+  } catch (e) {
+    sel.innerHTML = '<option value="">Could not load products</option>';
+    setMsg("msg", friendly(e), "err");
+  }
+}
+$("pickProduct").addEventListener("change", () => {
+  const p = PRODUCTS.find(x => x.id === $("pickProduct").value);
+  if (!p) { resetForm(); $("formBox").hidden = true; return; }
+  fillForm(p); $("formBox").hidden = false;
+});
+$("modeNew").addEventListener("click", () => { if (!busy) setMode("new"); });
+$("modeEdit").addEventListener("click", () => { if (!busy) setMode("edit"); });
+
 // ---------- save ----------
+function finish(title, text, againLabel){
+  $("doneTitle").textContent = title; $("doneText").textContent = text; $("again").textContent = againLabel;
+  show("done");
+}
 $("save").addEventListener("click", async () => {
   if (busy) return;
   setMsg("msg", "");
@@ -280,43 +454,59 @@ $("save").addEventListener("click", async () => {
   if (name.length < 2) return setMsg("msg", "Please enter the product name.", "err");
   if (!(price > 0)) return setMsg("msg", "Please enter the selling price.", "err");
   if (!(mrp >= price)) return setMsg("msg", "MRP must be the same as, or higher than, the selling price.", "err");
-  if (!photos.length && !confirm("You haven't added any photos. Save without photos?")) return;
+  const sz = readSizes();
+  if (sz.error) return setMsg("msg", sz.error, "err");
+  if (mode === "new" && !photos.length && !confirm("You haven't added any photos. Save without photos?")) return;
+  if (mode === "edit" && !editing) return setMsg("msg", "Please choose a product first.", "err");
 
   busy = true; $("save").disabled = true;
   try {
-    const urls = [];
-    for (let i = 0; i < photos.length; i++) {
-      const p = photos[i];
-      if (!p.url) {
-        setMsg("msg", `Uploading photo ${i + 1} of ${photos.length}…`, "info");
-        const blob = await compress(p.file);
-        const out = await api("admin_upload", blob, { "Content-Type": "image/jpeg" });
-        p.url = out.url;
-      }
-      urls.push(p.url);
-    }
-    setMsg("msg", "Saving product…", "info");
-    const product = {
+    const urls = await uploadPhotos();
+    const chartUrl = chart ? await uploadOne(chart, "Uploading size chart…") : "";
+    const fields = {
       name, category: $("category").value, style: $("style").value.trim(),
       price, mrp, details: $("details").value.trim(), images: urls,
       badge: $("badge").value, bestseller: $("bestseller").checked, offer_label: $("offer").value.trim(),
+      sizes: sz.value, size_chart: chartUrl,
     };
-    const out = await api("admin_add", JSON.stringify({ product }), { "Content-Type": "application/json" });
-    $("doneText").textContent = `"${name}" was added with ${urls.length} photo${urls.length === 1 ? "" : "s"} (product number ${out.id}). It will appear on the website within a minute.`;
-    show("done");
+    if (mode === "new") {
+      setMsg("msg", "Saving product…", "info");
+      const out = await api("admin_add", JSON.stringify({ product: fields }), JSON_H);
+      finish("Product added", `"${name}" was added with ${urls.length} photo${urls.length === 1 ? "" : "s"} (product number ${out.id}). It will appear on the website within a minute.`, "Add another product");
+    } else {
+      setMsg("msg", "Saving changes…", "info");
+      fields.active = $("fActive").checked;
+      fields.soldout = $("fSold").checked;
+      await api("admin_update", JSON.stringify({ id: editing.id, fields }), JSON_H);
+      finish("Changes saved", `"${name}" has been updated. The changes appear on the website within a minute.`, "Edit another product");
+    }
   } catch (e) {
-    setMsg("msg", friendly(e) + (photos.some(p => p.url) ? " (Photos that already uploaded won't be uploaded again — just tap Save once more.)" : ""), "err");
+    setMsg("msg", friendly(e) + retryNote(), "err");
   } finally {
     busy = false; $("save").disabled = false;
   }
 });
 
+// ---------- delete ----------
+$("del").addEventListener("click", async () => {
+  if (busy || !editing) return;
+  if (!confirm(`Delete "${editing.name}" permanently?\n\nThis cannot be undone. If you only want to hide it from customers, untick "Show this product on the website" instead.`)) return;
+  busy = true; $("del").disabled = true;
+  try {
+    setMsg("msg", "Deleting…", "info");
+    const name = editing.name;
+    await api("admin_delete", JSON.stringify({ id: editing.id }), JSON_H);
+    finish("Product deleted", `"${name}" has been removed. It disappears from the website within a minute.`, "Edit another product");
+  } catch (e) {
+    setMsg("msg", friendly(e), "err");
+  } finally {
+    busy = false; $("del").disabled = false;
+  }
+});
+
 $("again").addEventListener("click", () => {
-  photos.forEach(p => URL.revokeObjectURL(p.preview));
-  photos = []; renderThumbs();
-  ["name","style","price","mrp","details","offer"].forEach(id => { $(id).value = ""; });
-  $("badge").value = ""; $("bestseller").checked = false; $("category").selectedIndex = 0;
-  updateOff(); setMsg("msg", ""); show("app");
+  setMode(mode);          // fresh form (and a fresh product list when editing)
+  show("app");
   window.scrollTo(0, 0);
 });
 </script>
