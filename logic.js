@@ -614,7 +614,7 @@ function renderProductDetail(){
 
 // ---- checkout: delivery form -> Razorpay -> verified order ---------------
 const PAYMENT_API   = "https://bandolera-shop.byme.workers.dev/";  // your payment Worker
-const CONTACT_EMAIL = "hello@bandolera.com";                        // contact form goes here
+const CONTACT_EMAIL = "contact@bandolera.com";                        // contact form goes here
 const CUSTOMER_KEY  = "bdlr_customer";
 
 function loadSavedCustomer(){
