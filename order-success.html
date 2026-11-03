@@ -72,7 +72,17 @@
 <script>
   const params = new URLSearchParams(window.location.search);
   const pid = params.get("payment_id");
-  if(pid) document.getElementById("paymentId").textContent = "Payment ID: " + pid;
+  if(params.get("cod") === "1"){
+    const amt = Number(params.get("amount")) || 0;
+    document.title = "Order Placed — Bandolera";
+    document.querySelector(".success-wrap h1").textContent = "Order Placed!";
+    document.querySelector(".success-wrap p:not(.success-id)").textContent =
+      "Thank you! Please keep " + (amt ? "\u20B9" + amt.toLocaleString("en-IN") : "the amount") +
+      " ready \u2014 you\u2019ll pay in cash when your order arrives. We\u2019ll confirm your order on WhatsApp shortly.";
+    document.getElementById("paymentId").textContent = "Order ID: " + (params.get("order_id") || "");
+  } else if(pid){
+    document.getElementById("paymentId").textContent = "Payment ID: " + pid;
+  }
 </script>
 </body>
 </html>

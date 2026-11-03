@@ -614,7 +614,7 @@ function renderProductDetail(){
 
 // ---- checkout: delivery form -> Razorpay -> verified order ---------------
 const PAYMENT_API   = "https://bandolera-shop.byme.workers.dev/";  // your payment Worker
-const CONTACT_EMAIL = "contact@bandolera.com";                        // contact form goes here
+const CONTACT_EMAIL = "hello@bandolera.com";                        // contact form goes here
 const CUSTOMER_KEY  = "bdlr_customer";
 
 function loadSavedCustomer(){
@@ -653,10 +653,15 @@ function openAddressModal(){
             <label class="addr-field"><span>Pincode</span><input name="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code"></label>
           </div>
           <label class="addr-remember"><input type="checkbox" name="remember" checked> Remember my details on this device</label>
+          <div class="pay-options">
+            <p class="pay-title">Payment method</p>
+            <label class="pay-opt"><input type="radio" name="paymethod" value="online" checked><span><b>Pay online</b><small>UPI, cards, net banking</small></span></label>
+            <label class="pay-opt" id="codOpt" hidden><input type="radio" name="paymethod" value="cod"><span><b>Cash on Delivery</b><small id="codNote"></small></span></label>
+          </div>
           <p class="addr-error" id="addrError" role="alert"></p>
           <div class="addr-actions">
             <button type="button" class="addr-cancel">Cancel</button>
-            <button type="submit" class="addr-pay">Pay ${money(cartTotal())}</button>
+            <button type="submit" class="addr-pay" id="addrPay">Pay ${money(cartTotal())}</button>
           </div>
         </form>
       </div>`;
@@ -692,27 +697,74 @@ function openAddressModal(){
       const err = validateCustomerFields(customer);
       if(err){ wrap.querySelector("#addrError").textContent = err; return; }
       if(f("remember").checked) saveCustomer(customer); else forgetCustomer();
-      close(customer);
+      close({ customer, method: (form.querySelector('input[name="paymethod"]:checked') || {}).value || "online" });
     });
 
     requestAnimationFrame(()=> { wrap.classList.add("is-open"); f("name").focus(); });
+
+    // Cash on Delivery: the Worker decides if it is on, the fee and the limit
+    const codOpt = wrap.querySelector("#codOpt"), codNote = wrap.querySelector("#codNote"), payBtn = wrap.querySelector("#addrPay");
+    const subtotal = cartTotal();
+    let cod = null;
+    const labelFor = () => {
+      const m = (form.querySelector('input[name="paymethod"]:checked') || {}).value;
+      payBtn.textContent = (m === "cod" && cod) ? `Place order · ${money(subtotal + cod.fee)}` : `Pay ${money(subtotal)}`;
+    };
+    form.addEventListener("change", e => { if(e.target.name === "paymethod") labelFor(); });
+    (async () => {
+      try{
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 4000);
+        const r = await fetch(`${PAYMENT_API}?action=config`, { signal: ctl.signal });
+        clearTimeout(timer);
+        const cfg = await r.json();
+        if(!cfg || !cfg.ok || !cfg.cod || !cfg.cod.enabled) return;
+        cod = cfg.cod;
+        codOpt.hidden = false;
+        const radio = codOpt.querySelector("input");
+        if(subtotal + cod.fee > cod.max){
+          radio.disabled = true; codOpt.classList.add("is-off");
+          codNote.textContent = `Available for orders up to ${money(cod.max)}`;
+        } else {
+          codNote.textContent = cod.fee > 0 ? `Pay in cash on delivery · +${money(cod.fee)} fee` : "Pay in cash when it arrives";
+        }
+      }catch(e){ /* if the settings can't be loaded, COD simply stays hidden */ }
+    })();
   });
 }
 
 async function startCheckout(){
   if(cart.length === 0){ toast("Add something first 👀"); return; }
-  if(typeof window.Razorpay === "undefined"){ toast("Payment is still loading. Try again in a moment."); return; }
 
   const btn = document.getElementById("checkoutBtn");
   const reset = ()=>{ btn.disabled = false; btn.textContent = "Checkout"; };
 
-  const customer = await openAddressModal();
-  if(!customer) return;
+  const choice = await openAddressModal();
+  if(!choice) return;
+  const { customer, method } = choice;
+
+  if(method !== "cod" && typeof window.Razorpay === "undefined"){ toast("Payment is still loading. Try again in a moment."); return; }
 
   btn.disabled = true;
   btn.textContent = "Processing…";
   try{
     const items = cart.map(c => ({ id: String(c.id), size: c.size || "", qty: c.qty }));
+
+    if(method === "cod"){
+      const cr = await fetch(`${PAYMENT_API}?action=cod`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, customer }),
+      });
+      const cd = await cr.json();
+      if(!cd.ok) throw new Error(cd.error || "We couldn't place your order. Please try again.");
+      cart = [];
+      saveCart();
+      renderCart();
+      toggleCart(false);
+      window.location.href = `order-success.html?cod=1&order_id=${encodeURIComponent(cd.order_id)}&amount=${encodeURIComponent(cd.amount)}`;
+      return;
+    }
     const res = await fetch(`${PAYMENT_API}?action=create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
